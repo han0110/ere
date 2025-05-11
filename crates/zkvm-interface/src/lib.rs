@@ -1,13 +1,15 @@
 use indexmap::IndexMap;
-use serde::Serialize;
 use std::{path::Path, time::Duration};
+
+mod input;
+pub use input::Input;
 
 #[allow(non_camel_case_types)]
 /// Compiler trait for compiling programs into an opaque sequence of bytes.
 pub trait Compiler {
     type Error: std::error::Error + Send + Sync + 'static;
     // TODO: check if this can be removed and we just use bytes
-    type Program: Clone;
+    type Program: AsRef<[u8]> + Clone + Send + Sync;
 
     /// Compiles the program and returns the program
     fn compile(path_to_program: &Path) -> Result<Self::Program, Self::Error>;
@@ -70,39 +72,5 @@ pub struct ProgramProvingReport {
 impl ProgramProvingReport {
     pub fn new(proving_time: Duration) -> Self {
         Self { proving_time }
-    }
-}
-
-/// Represents a builder for input data to be passed to a ZKVM guest program.
-/// Values are serialized sequentially into an internal byte buffer.
-#[derive(Debug, Clone, Default)] // Added Default for easy initialization
-pub struct Input {
-    // TODO: Succinct has Vec<Vec<u8> while R0 has Vec<u8>
-    // TODO: Maybe change back to Vec<u8> with markers for perf
-    pub data: Vec<Vec<u8>>,
-}
-
-impl Input {
-    pub fn new() -> Self {
-        Input { data: Vec::new() }
-    }
-
-    /// Serializes the given value using bincode and appends it to the internal data buffer.
-    pub fn write<T: Serialize>(&mut self, value: &T) -> anyhow::Result<()> {
-        // TODO: Remove anyhow::error for thiserror
-        use anyhow::Context;
-
-        let mut data = Vec::new();
-
-        let _ = bincode::serialize_into(&mut data, value).with_context(|| {
-            format!(
-                "Failed to serialize and write value of type {}",
-                std::any::type_name::<T>()
-            )
-        })?;
-
-        self.data.push(data);
-
-        Ok(())
     }
 }
