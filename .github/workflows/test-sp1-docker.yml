@@ -29,5 +29,5 @@ jobs:
       - name: Build ere-builder-sp1 image
         run: |
           docker build \
-            --tag ere-builder-succinct:latest \
+            --tag ere-builder-sp1:latest \
             --file docker/sp1/Dockerfile .

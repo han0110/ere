@@ -16,9 +16,9 @@ RUN chmod +x /tmp/install_sp1_sdk.sh
 # TODO: Check the sp1up script to see if most of the below path configs are needed
 # Define where SP1 SDK will be installed within the image.
 # The install_sp1_sdk.sh script will respect these ENV variables.
-# ${HOME} will resolve to the current user's home (e.g., /root when this stage runs as root).
-ENV SP1UP_HOME="${HOME}/.sp1up" \
-    SP1_HOME="${HOME}/.sp1"
+# TODO: we are hardcoding /root which may not work for other users
+ENV SP1UP_HOME="/root/.sp1up" \
+    SP1_HOME="/root/.sp1"
 
 # Run the SP1 SDK installation script
 # It will use the SP1UP_HOME and SP1_HOME defined above.
