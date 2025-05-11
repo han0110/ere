@@ -1,0 +1,55 @@
+# TODO: change to 24?
+ARG UBUNTU_VERSION=22.04
+FROM ubuntu:${UBUNTU_VERSION}
+
+# Set DEBIAN_FRONTEND to noninteractive to avoid prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install common dependencies and build tools
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    pkg-config \
+    curl \
+    wget \
+    git \
+    jq \
+    tar \
+    unzip \
+    ca-certificates \
+    openssl \
+    libssl-dev \
+    # Clean up apt cache
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install rustup.
+# RUST_VERSION can be 1.85, stable, nightly, etc
+ARG RUST_VERSION=1.85.0 
+
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:$PATH
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain ${RUST_VERSION} --no-modify-path
+
+# Add a non-root user for subsequent stages or use in derived images
+# This is generally best practice.
+ARG USERNAME=ere_user
+ARG USER_UID=1000
+ARG USER_GID=${USER_UID}
+RUN groupadd --gid ${USER_GID} ${USERNAME} && \
+    useradd --uid ${USER_UID} --gid ${USER_GID} --shell /bin/bash --create-home ${USERNAME}
+
+# Set a default working directory (optional, can be overridden)
+WORKDIR /app
+
+# TODO: Default to the non-root user?
+# USER ${USERNAME}
+
+# Verify Rust installation went well
+RUN rustc --version
+RUN cargo --version
+
+CMD ["/bin/bash"] 
