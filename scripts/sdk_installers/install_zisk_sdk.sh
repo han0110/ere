@@ -33,7 +33,7 @@ ensure_tool_installed "cargo" "as cargo-zisk is a cargo subcommand"
 # Run ziskup installer script with --provingkey to get a full setup.
 # This also installs the 'zisk' rust toolchain and cargo-zisk CLI.
 echo "Running ziskup installer with --provingkey option..."
-curl https://raw.githubusercontent.com/0xPolygonHermez/zisk/main/ziskup/install.sh | bash -s -- --provingkey
+curl https://raw.githubusercontent.com/0xPolygonHermez/zisk/main/ziskup/install.sh | bash -s -- --1
 
 # ziskup installs tools like cargo-zisk to $HOME/.zisk/bin.
 # Add this to PATH for the current script session so we can verify cargo-zisk.
