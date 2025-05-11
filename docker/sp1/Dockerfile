@@ -30,7 +30,15 @@ ENV PATH="${SP1UP_HOME}/bin:${SP1_HOME}/bin:$PATH"
 
 # Verify SP1 installation (optional here, as script does it, but good for sanity)
 RUN cargo prove --version
-RUN rustup toolchain list | grep succinct || (echo "SP1 Toolchain (succinct) not found after script execution!" && exit 1)
+
+# Copy the entire ere project context
+# The WORKDIR is /app from the base image
+WORKDIR /app
+COPY . .
+
+# --- Test Execution Step (for the ere-sp1 library) ---
+RUN echo "Running tests for ere-sp1 library..." && \
+    cargo test --release -p ere-sp1 --lib -- --color always
 
 CMD ["/bin/bash"] 
 
