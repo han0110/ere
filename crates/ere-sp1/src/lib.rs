@@ -1,7 +1,7 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use compile::compile_sp1_program;
-use sp1_sdk::{ProverClient, SP1ProofWithPublicValues, SP1Stdin};
+use sp1_sdk::{Prover, ProverClient, SP1ProofWithPublicValues, SP1Stdin};
 use thiserror::Error;
 use tracing::info;
 use zkvm_interface::{Compiler, ProgramExecutionReport, ProgramProvingReport, zkVM};
@@ -68,7 +68,7 @@ impl zkVM<EreSP1> for EreSP1 {
         inputs: &zkvm_interface::Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
         // TODO: This is expensive, should move it out and make the struct stateful
-        let client = ProverClient::from_env();
+        let client = ProverClient::builder().cpu().build();
 
         let mut stdin = SP1Stdin::new();
         for input in inputs.chunked_iter() {
@@ -91,7 +91,9 @@ impl zkVM<EreSP1> for EreSP1 {
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
         info!("Generating proof…");
 
-        let client = ProverClient::from_env();
+        // TODO: This is expensive, should move it out and make the struct stateful
+        let client = ProverClient::builder().cpu().build();
+        // TODO: This can also be cached
         let (pk, _vk) = client.setup(&program_bytes);
 
         let mut stdin = SP1Stdin::new();
