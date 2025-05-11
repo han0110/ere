@@ -2,6 +2,8 @@
 members = [
     # zkVM interface
     "crates/zkvm-interface",
+    # zkVMs
+    "crates/ere-sp1",
 ]
 resolver = "2"
 
