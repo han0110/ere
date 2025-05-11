@@ -3,24 +3,40 @@ use serde::Serialize;
 use std::{path::Path, time::Duration};
 
 #[allow(non_camel_case_types)]
+/// Compiler trait for compiling programs into an opaque sequence of bytes.
+pub trait Compiler {
+    type Error: std::error::Error + Send + Sync + 'static;
+    // TODO: check if this can be removed and we just use bytes
+    type Program: Clone;
+
+    /// Compiles the program and returns the program
+    fn compile(path_to_program: &Path) -> Result<Self::Program, Self::Error>;
+}
+
+#[allow(non_camel_case_types)]
 /// zkVM trait to abstract away the differences between each zkVM
-pub trait zkVM {
+pub trait zkVM<C: Compiler> {
     type Error: std::error::Error + Send + Sync + 'static;
 
-    /// Compiles the program and returns the `ELF` as bytes
-    fn compile(path_to_program: &Path) -> Result<Vec<u8>, Self::Error>;
+    /// Executes the given program with the inputs accumulated in the Input struct.
+    /// For RISCV programs, `program_bytes` will be the ELF binary
+    fn execute(
+        program_bytes: &C::Program,
+        inputs: &Input,
+    ) -> Result<ProgramExecutionReport, Self::Error>;
 
-    /// Executes the given ELF binary with the inputs accumulated in the Input struct.
-    fn execute(elf_bytes: &[u8], inputs: &Input) -> Result<ProgramExecutionReport, Self::Error>;
-
-    /// Creates a proof for the given program
+    /// Creates a proof for a given program
     fn prove(
-        elf_bytes: &[u8],
+        program_bytes: &C::Program,
         inputs: &Input,
     ) -> Result<(Vec<u8>, ProgramProvingReport), Self::Error>;
 
     /// Verifies a proof for the given program
-    fn verify(elf_bytes: &[u8], proof: &[u8]) -> Result<(), Self::Error>;
+    /// TODO: Pass public inputs too and check that they match if they come with the
+    /// TODO: proof, or append them if they do not.
+    /// TODO: We can also just have this return the public inputs, but then the user needs
+    /// TODO: ensure they check it for correct #[must_use]
+    fn verify(program_bytes: &C::Program, proof: &[u8]) -> Result<(), Self::Error>;
 }
 
 /// ProgramExecutionReport produces information about a particular program
