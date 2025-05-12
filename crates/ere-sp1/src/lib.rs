@@ -8,7 +8,9 @@ use zkvm_interface::{Compiler, ProgramExecutionReport, ProgramProvingReport, zkV
 
 mod compile;
 
-// Represents Ere compliant API for SP1
+#[allow(non_camel_case_types)]
+pub struct RV32_IM_SUCCINCT_ZKVM_ELF;
+
 pub struct EreSP1;
 
 #[derive(Debug, thiserror::Error)]
@@ -50,7 +52,7 @@ pub enum VerifyError {
     Client(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
 }
 
-impl Compiler for EreSP1 {
+impl Compiler for RV32_IM_SUCCINCT_ZKVM_ELF {
     type Error = SP1Error;
 
     type Program = Vec<u8>;
@@ -60,11 +62,11 @@ impl Compiler for EreSP1 {
     }
 }
 
-impl zkVM<EreSP1> for EreSP1 {
+impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
     type Error = SP1Error;
 
     fn execute(
-        program_bytes: &<Self as Compiler>::Program,
+        program_bytes: &<RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
         inputs: &zkvm_interface::Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
         // TODO: This is expensive, should move it out and make the struct stateful
@@ -86,7 +88,7 @@ impl zkVM<EreSP1> for EreSP1 {
     }
 
     fn prove(
-        program_bytes: &<Self as Compiler>::Program,
+        program_bytes: &<RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
         inputs: &zkvm_interface::Input,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
         info!("Generating proof…");
@@ -116,7 +118,7 @@ impl zkVM<EreSP1> for EreSP1 {
     }
 
     fn verify(
-        program_bytes: &<Self as Compiler>::Program,
+        program_bytes: &<RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
         proof: &[u8],
     ) -> Result<(), Self::Error> {
         info!("Verifying proof…");
@@ -142,7 +144,7 @@ mod execute_tests {
 
     fn get_compiled_test_sp1_elf() -> Result<Vec<u8>, SP1Error> {
         let test_guest_path = get_execute_test_guest_program_path();
-        EreSP1::compile(&test_guest_path)
+        RV32_IM_SUCCINCT_ZKVM_ELF::compile(&test_guest_path)
     }
 
     fn get_execute_test_guest_program_path() -> PathBuf {
@@ -210,7 +212,7 @@ mod prove_tests {
 
     fn get_compiled_test_sp1_elf_for_prove() -> Result<Vec<u8>, SP1Error> {
         let test_guest_path = get_prove_test_guest_program_path();
-        EreSP1::compile(&test_guest_path)
+        RV32_IM_SUCCINCT_ZKVM_ELF::compile(&test_guest_path)
     }
 
     #[test]

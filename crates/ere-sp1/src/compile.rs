@@ -146,7 +146,8 @@ pub fn compile_sp1_program(program_crate_path: &Path) -> Result<Vec<u8>, Compile
 mod tests {
     use zkvm_interface::Compiler;
 
-    use crate::EreSP1;
+    
+    use crate::RV32_IM_SUCCINCT_ZKVM_ELF;
 
     use super::*;
     use std::path::PathBuf;
@@ -181,7 +182,7 @@ mod tests {
     #[test]
     fn test_compile_trait() {
         let test_guest_path = get_compile_test_guest_program_path();
-        match EreSP1::compile(&test_guest_path) {
+        match RV32_IM_SUCCINCT_ZKVM_ELF::compile(&test_guest_path) {
             Ok(elf_bytes) => {
                 assert!(!elf_bytes.is_empty(), "ELF bytes should not be empty.");
             }

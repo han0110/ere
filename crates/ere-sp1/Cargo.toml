@@ -7,13 +7,9 @@ license.workspace = true
 
 [dependencies]
 sp1-sdk = "4.2.0"
-dotenv = "0.15.0"
 zkvm-interface = { workspace = true }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
 toml = "0.8"
 tempfile = "3.3"
-clap = { version = "4.4", features = ["derive"] }
 bincode = "1.3"
 thiserror = "2"
 tracing = "0.1"
