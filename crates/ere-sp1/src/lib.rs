@@ -2,55 +2,18 @@
 
 use compile::compile_sp1_program;
 use sp1_sdk::{Prover, ProverClient, SP1ProofWithPublicValues, SP1Stdin};
-use thiserror::Error;
 use tracing::info;
 use zkvm_interface::{Compiler, ProgramExecutionReport, ProgramProvingReport, zkVM};
 
 mod compile;
 
+mod error;
+use error::{ExecuteError, ProveError, SP1Error, VerifyError};
+
 #[allow(non_camel_case_types)]
 pub struct RV32_IM_SUCCINCT_ZKVM_ELF;
 
 pub struct EreSP1;
-
-#[derive(Debug, thiserror::Error)]
-pub enum SP1Error {
-    #[error(transparent)]
-    CompileError(#[from] compile::CompileError),
-
-    #[error(transparent)]
-    Execute(#[from] ExecuteError),
-
-    #[error(transparent)]
-    Prove(#[from] ProveError),
-
-    #[error(transparent)]
-    Verify(#[from] VerifyError),
-}
-
-#[derive(Debug, Error)]
-pub enum ExecuteError {
-    #[error("SP1 execution failed: {0}")]
-    Client(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
-}
-
-#[derive(Debug, Error)]
-pub enum ProveError {
-    #[error("SP1 SDK proving failed: {0}")]
-    Client(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
-
-    #[error("Serialising proof with `bincode` failed: {0}")]
-    Bincode(#[from] bincode::Error),
-}
-
-#[derive(Debug, Error)]
-pub enum VerifyError {
-    #[error("Deserialising proof failed: {0}")]
-    Bincode(#[from] bincode::Error),
-
-    #[error("SP1 SDK verification failed: {0}")]
-    Client(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
-}
 
 impl Compiler for RV32_IM_SUCCINCT_ZKVM_ELF {
     type Error = SP1Error;
@@ -112,7 +75,7 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
         let proving_time = start.elapsed();
 
         let bytes = bincode::serialize(&proof_with_inputs)
-            .map_err(|err| SP1Error::Verify(VerifyError::Bincode(err)))?;
+            .map_err(|err| SP1Error::Prove(ProveError::Bincode(err)))?;
 
         Ok((bytes, ProgramProvingReport::new(proving_time)))
     }

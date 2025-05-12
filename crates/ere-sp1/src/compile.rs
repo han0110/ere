@@ -1,53 +1,10 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-    process::{Command, ExitStatus},
-};
+use std::{fs, path::Path, process::Command};
 
 use tempfile::TempDir;
-use thiserror::Error;
 use toml::Value as TomlValue;
 use tracing::info;
 
-/// Errors that can be encountered while compiling a SP1 program
-#[derive(Debug, Error)]
-pub enum CompileError {
-    #[error("Program path does not exist or is not a directory: {0}")]
-    InvalidProgramPath(PathBuf),
-    #[error(
-        "Cargo.toml not found in program directory: {program_dir}. Expected at: {manifest_path}"
-    )]
-    CargoTomlMissing {
-        program_dir: PathBuf,
-        manifest_path: PathBuf,
-    },
-    #[error("Could not find `[package].name` in guest Cargo.toml at {path}")]
-    MissingPackageName { path: PathBuf },
-    #[error("Compiled ELF not found at expected path: {0}")]
-    ElfNotFound(PathBuf),
-    #[error("`cargo prove build` failed with status: {status} for program at {path}")]
-    CargoBuildFailed { status: ExitStatus, path: PathBuf },
-    #[error("Failed to read file at {path}: {source}")]
-    ReadFile {
-        path: PathBuf,
-        #[source]
-        source: std::io::Error,
-    },
-    #[error("Failed to parse guest Cargo.toml at {path}: {source}")]
-    ParseCargoToml {
-        path: PathBuf,
-        #[source]
-        source: toml::de::Error,
-    },
-    #[error("Failed to execute `cargo prove build` in {cwd}: {source}")]
-    CargoProveBuild {
-        cwd: PathBuf,
-        #[source]
-        source: std::io::Error,
-    },
-    #[error("Failed to create temporary output directory: {0}")]
-    TempDir(#[from] std::io::Error),
-}
+use crate::error::CompileError;
 
 /// Compile the guest crate and return raw ELF bytes.
 pub fn compile_sp1_program(program_crate_path: &Path) -> Result<Vec<u8>, CompileError> {
