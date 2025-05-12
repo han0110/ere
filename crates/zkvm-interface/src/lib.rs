@@ -9,7 +9,7 @@ pub use input::Input;
 pub trait Compiler {
     type Error: std::error::Error + Send + Sync + 'static;
     // TODO: check if this can be removed and we just use bytes
-    type Program: AsRef<[u8]> + Clone + Send + Sync;
+    type Program: Clone + Send + Sync;
 
     /// Compiles the program and returns the program
     fn compile(path_to_program: &Path) -> Result<Self::Program, Self::Error>;
