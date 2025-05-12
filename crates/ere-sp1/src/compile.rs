@@ -146,7 +146,6 @@ pub fn compile_sp1_program(program_crate_path: &Path) -> Result<Vec<u8>, Compile
 mod tests {
     use zkvm_interface::Compiler;
 
-    
     use crate::RV32_IM_SUCCINCT_ZKVM_ELF;
 
     use super::*;
