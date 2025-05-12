@@ -3,7 +3,7 @@ members = [
     # zkVM interface
     "crates/zkvm-interface",
     # zkVMs
-    "crates/ere-sp1",
+    "crates/ere-sp1", "crates/ere-risczero",
 ]
 resolver = "2"
 
