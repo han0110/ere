@@ -14,7 +14,7 @@ impl Compiler for RV32_IM_RISCZERO_ZKVM_ELF {
 
     type Program = Vec<u8>;
 
-    fn compile(path_to_program: &std::path::Path) -> Result<Self::Program, Self::Error> {
+    fn compile(_path_to_program: &std::path::Path) -> Result<Self::Program, Self::Error> {
         todo!()
     }
 }
