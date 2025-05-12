@@ -20,6 +20,11 @@ RUN /tmp/install_risc0_sdk.sh
 # Verify Risc0 installation (script also does this, but good for Dockerfile sanity)
 RUN echo "Verifying Risc0 installation in Dockerfile (post-script)..." && cargo risczero --version
 
+# Copy the entire ere project context
+# The WORKDIR is /app from the base image
+WORKDIR /app
+COPY . .
+
 # Run tests
 RUN echo "Running tests for ere-risczero library..." && \
     cargo test --release -p ere-risczero --lib -- --color always
