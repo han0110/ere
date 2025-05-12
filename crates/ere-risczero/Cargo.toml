@@ -7,7 +7,7 @@ license.workspace = true
 
 [dependencies]
 zkvm-interface = { workspace = true }
-anyhow = "1.0"
+anyhow = "1.0"                        #TODO: remove only needed in tests
 toml = "0.8"
 
 tempfile = "3.3"
