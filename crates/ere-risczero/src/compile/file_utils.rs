@@ -4,6 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+// NOTE: We can remove this if we can deterministically always knows where the risc0 artifacts
+// will be.
+
 /// RAII guard for backing up a file and ensuring its original state is restored
 /// when the guard goes out of scope, or that a temporarily created file is deleted.
 #[derive(Debug)]
