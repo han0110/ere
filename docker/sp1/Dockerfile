@@ -36,7 +36,7 @@ RUN cargo prove --version
 WORKDIR /app
 COPY . .
 
-# --- Test Execution Step (for the ere-sp1 library) ---
+# Run tests
 RUN echo "Running tests for ere-sp1 library..." && \
     cargo test --release -p ere-sp1 --lib -- --color always
 
