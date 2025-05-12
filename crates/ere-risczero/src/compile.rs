@@ -15,7 +15,7 @@ use std::{
 /// TODO: we can remove this hack sometime soon.
 const BUILD_SCRIPT_TEMPLATE: &str = include_str!("../build_script_template.rs");
 
-pub(crate) fn compile_risc0_program(path: &Path) -> Result<Vec<u8>, CompileError> {
+pub(crate) fn compile_risczero_program(path: &Path) -> Result<Vec<u8>, CompileError> {
     if !path.exists() || !path.is_dir() {
         return Err(CompileError::InvalidMethodsPath(path.to_path_buf()));
     }
@@ -65,10 +65,10 @@ pub(crate) fn compile_risc0_program(path: &Path) -> Result<Vec<u8>, CompileError
 mod tests {
     mod compile {
 
-        use crate::compile::compile_risc0_program;
+        use crate::compile::compile_risczero_program;
         use std::path::PathBuf;
 
-        fn get_test_risc0_methods_crate_path() -> PathBuf {
+        fn get_test_risczero_methods_crate_path() -> PathBuf {
             let workspace_dir = env!("CARGO_WORKSPACE_DIR");
             PathBuf::from(workspace_dir)
                 .join("tests")
@@ -79,11 +79,11 @@ mod tests {
         }
 
         #[test]
-        fn test_compile_risc0_method_with_custom_build_rs() {
-            let test_methods_path = get_test_risc0_methods_crate_path();
+        fn test_compile_risczero_method_with_custom_build_rs() {
+            let test_methods_path = get_test_risczero_methods_crate_path();
 
             let program =
-                compile_risc0_program(&test_methods_path).expect("risc0 compilation failed");
+                compile_risczero_program(&test_methods_path).expect("risc0 compilation failed");
             assert!(!program.is_empty(), "Risc0 ELF bytes should not be empty.");
         }
     }
