@@ -73,6 +73,7 @@ mod tests {
             PathBuf::from(workspace_dir)
                 .join("tests")
                 .join("risczero")
+                .join("compile")
                 .join("project_structure_build")
                 .canonicalize()
                 .expect("Failed to find or canonicalize test Risc0 methods crate")
