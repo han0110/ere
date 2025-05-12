@@ -6,6 +6,8 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
+zkvm-interface = { workspace = true }
+thiserror = "2"
 
 [lints]
 workspace = true

@@ -1650,6 +1650,10 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 [[package]]
 name = "ere-risczero"
 version = "0.1.0"
+dependencies = [
+ "thiserror 2.0.12",
+ "zkvm-interface",
+]
 
 [[package]]
 name = "ere-sp1"

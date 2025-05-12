@@ -1,14 +1,20 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+use thiserror::Error;
+use zkvm_interface::Compiler;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod compile;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+#[allow(non_camel_case_types)]
+pub struct RV32_IM_RISCZERO_ZKVM_ELF;
+
+#[derive(Debug, Error)]
+pub enum RiscZeroError {}
+
+impl Compiler for RV32_IM_RISCZERO_ZKVM_ELF {
+    type Error = RiscZeroError;
+
+    type Program = Vec<u8>;
+
+    fn compile(path_to_program: &std::path::Path) -> Result<Self::Program, Self::Error> {
+        todo!()
     }
 }
