@@ -1,4 +1,6 @@
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
 use jolt::JoltHyperKZGProof;
+use std::io::Cursor;
 use std::{fs, path::Path};
 use toml::Value;
 
@@ -19,9 +21,6 @@ pub(crate) fn package_name_from_manifest(manifest_path: &Path) -> Result<String,
         .map(|s| s.to_owned())
         .ok_or_else(|| panic!("no [package] name found in {}", manifest_path.display()))
 }
-
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
-use std::io::Cursor;
 
 /// Serializes the public input (as raw bytes) and proof into a single byte vector
 pub fn serialize_public_input_with_proof(
