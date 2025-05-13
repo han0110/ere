@@ -1,115 +1,143 @@
 <p align="center">
-  <img src="assets/logo-blue-white.svg" alt="Ere" width="300"/>
+  <img src="assets/logo-blue-white.svg" alt="Ere logo" width="260"/>
 </p>
 
-<h1 align="center">Ere - Unified zkVM Interface and Toolkit </h1>
+<h1 align="center">Ere – Unified zkVM Interface & Toolkit</h1>
+
+<p align="center">
+  <b>Compile. Execute. Prove. Verify.</b><br/>
+  One ergonomic Rust API, multiple zero‑knowledge virtual machines.
+</p>
+
+---
+
+## Table of Contents
+
+* [Overview](#overview)
+* [Features](#features)
+* [Supported zkVMs](#supported-zkvms)
+* [Quick Start](#quick-start)
+
+  * [1. Install SDKs](#1-install-sdks)
+  * [2. Add Dependencies](#2-add-dependencies)
+  * [3. Compile & Prove Example](#3-compile--prove-example)
+  * [4. Run the Test Suite](#4-run-the-test-suite)
+* [Directory Layout](#directory-layout)
+* [Architecture](#architecture)
+
+  * [The Interface](#the-interface)
+  * [Backend Crates](#backend-crates)
+  * [Input Handling](#input-handling)
+* [Contributing](#contributing)
+* [Disclaimer](#disclaimer)
+* [License](#license)
 
 ## Overview
 
-**ere** is a Rust workspace providing a unified interface and toolkit for working with multiple zero-knowledge virtual machines (zkVMs). It abstracts over the differences between zkVMs, allowing you to compile, execute, prove, and verify programs across several backends with a common API.
-
-### Supported zkVMs
-
-| zkVM | Status | Compile | Execute | Prove | Verify | Notes |
-|------|--------|---------|---------|-------|--------|-------|
-| SP1 | ✅ Full | ✅ | ✅ | ✅ | ✅ | |
-| OpenVM | ✅ Full | ✅ | ✅ | ✅ | ✅ | |
-| RISC Zero | ✅ Full | ✅ | ✅ | ✅ | ✅ | |
-| Jolt | ⚠️ Partial | ✅ | ✅ | ❌ | ✅ | Prover incompatibility |
-| Pico | ⚠️ Partial | ✅ | ❌ | ✅ | ❌ | Missing execute and verify methods in API |
-| Zisk | ⚠️ Partial | ❌ | ❌ | ❌ | ❌ | Ziskup not working in Docker |
+**Ere** is a Rust workspace providing a unified interface and toolkit for multiple zero‑knowledge virtual machines (zkVMs). It abstracts away backend differences so you can compile, execute, prove, and verify programs across several backends with a single API.
 
 ## Features
 
-- **Unified Rust API** for compiling, executing, proving, and verifying zkVM programs
-- **Pluggable backends**: swap between zkVMs with minimal code changes
-- **SDK installer scripts** for all supported zkVMs
+* **Unified Rust API** for compiling, executing, proving & verifying zkVM programs
+* **Pluggable back‑ends** – easily switch between different zkVMs
+* **SDK bootstrap scripts** for every supported zkVM
+* **End‑to‑end test suite** covering compilation → proof → verification for each backend
 
-## Directory Structure
+## Supported zkVMs
 
-- `crates/zkvm-interface/` — Core traits (`Compiler`, `zkVM`), input serialization, and reporting types
-- `crates/ere-{zkVM}/` — zkVM specific backend
-- `tests/` — Example guest programs and integration tests for each backend
-- `scripts/sdk_installers/` — Shell scripts to install the SDKs for each zkVM
-- `docker/` — Dockerfiles and build contexts for each zkVM environment
+| zkVM      | Support    | Compile | Execute | Prove | Verify | Notes                               |
+| --------- | ---------- | :-----: | :-----: | :---: | :----: | ----------------------------------- |
+| SP1       | ✅ Full     |    ✅    |    ✅    |   ✅   |    ✅   | —                                   |
+| OpenVM    | ✅ Full     |    ✅    |    ✅    |   ✅   |    ✅   | —                                   |
+| RISC Zero | ✅ Full     |    ✅    |    ✅    |   ✅   |    ✅   | —                                   |
+| Jolt      | ⚠️ Partial |    ✅    |    ✅    |   ❌   |    ✅   | Prover incompatibility              |
+| Pico      | ⚠️ Partial |    ✅    |    ❌    |   ✅   |    ❌   | Missing execute & verify in API     |
+| Zisk      | ⚠️ Partial |    ❌    |    ❌    |   ❌   |    ❌   | `ziskup` currently broken in Docker |
 
-## How It Works
+> **Legend** — ✅ implemented · ⚠️ partially implemented · ❌ not yet implemented
 
-### 1. The Interface
-
-The `zkvm-interface` crate defines two main traits:
-
-- **Compiler**: Compiles a guest program (e.g., a Rust crate) into the appropriate binary/artifact for a zkVM
-- **zkVM**: Executes, proves, and verifies programs on a zkVM
-
-Each backend implements these traits for its own types.
-
-### 2. Backend Crates
-
-Each backend crate (e.g., `ere-sp1`, `ere-jolt`) implements the `Compiler` and `zkVM` traits, handling the specifics of compilation, execution, proof generation, and verification for its respective zkVM. The `Compiler` and `zkVm` trait living in the same crate is purely coincidental, it is entirely possible for the compiler to live elsewhere.
-
-### 3. Input Handling
-
-The `Input` struct in `zkvm-interface` serializes input data for guest programs, supporting chunked and contiguous access. Some zkVMs will ask for the input as a list of lists of bytes, while others want a list of bytes.
-
-### 4. Testing
-
-Each backend has a set of guest programs and tests under `tests/<backend>/`, which are used to validate compilation, execution, and proof/verification flows. This test corpus is expected to grow over time.
-
-### 5. SDK Installation
-
-SDKs for each zkVM can be installed using the scripts in `scripts/sdk_installers/`.
-
-## Usage
+## Quick Start
 
 ### 1. Install SDKs
 
-Before using a backend, install its SDK:
-
-```sh
+```bash
 bash scripts/sdk_installers/install_sp1_sdk.sh
 bash scripts/sdk_installers/install_jolt_sdk.sh
 ```
 
-### 2. Add as a Dependency
+### 2. Add Dependencies
 
-Add the relevant crates to your `Cargo.toml` as needed.
+```toml
+# Cargo.toml
+[dependencies]
+zkvm-interface = { path = "crates/zkvm-interface" }
+ere-sp1        = { path = "crates/ere-sp1" }
+```
 
-### 3. Example: Compiling and Proving a Program
+### 3. Compile & Prove Example
 
 ```rust
 use zkvm_interface::{Compiler, zkVM, Input};
 use ere_sp1::{EreSP1, RV32_IM_SUCCINCT_ZKVM_ELF};
 
-let program_path = std::path::Path::new("path/to/guest");
-let elf_bytes = RV32_IM_SUCCINCT_ZKVM_ELF::compile(program_path).unwrap();
+let guest = std::path::Path::new("guest/hello");
+let elf    = RV32_IM_SUCCINCT_ZKVM_ELF::compile(guest)?;      // compile
+let mut io = Input::new();
+io.write(&42u32)?;
 
-let mut input = Input::new();
-input.write(&42u32).unwrap();
-
-let (proof, report) = EreSP1::prove(&elf_bytes, &input).unwrap();
-EreSP1::verify(&elf_bytes, &proof).unwrap();
+let (proof, _report) = EreSP1::prove(&elf, &io)?;             // prove
+EreSP1::verify(&elf, &proof)?;                                // verify
 ```
 
-### 4. Running Tests
+### 4. Run the Test Suite
 
-Each backend crate and guest program has its own tests. Run them with:
-
-```sh
+```bash
 cargo test --workspace
 ```
 
-> Note: for this to work, you will need to have installed the relevant toolchain and target for the zkVM test you want to run. The recommended workflow is to use Docker.
+> **Tip** Use the provided Dockerfiles for a ready‑made toolchain.
+
+## Directory Layout
+
+```
+crates/
+  zkvm-interface/     ← core traits & types
+  ere-{backend}/      ← backend adapters (sp1, openvm, …)
+tests/                ← guest programs & integration tests
+scripts/sdk_installers/ ← SDK install helpers
+docker/               ← Dockerfiles & build contexts
+```
+
+## Architecture
+
+### The Interface
+
+`zkvm-interface` exposes two core traits:
+
+* **Compiler** – compile a guest project into the correct zkVM artifact. For most this will be a RISCV ELF binary or some type that wraps it and includes extra metadata such as a proving and verifying key.
+* **zkVM** – execute, prove & verify that artifact
+
+### Backend Crates
+
+Each `ere-{backend}` crate implements the above traits for its zkVM.
+
+### Input Handling
+
+The `Input` type supports both chunked (`Vec<Vec<u8>>`) and contiguous (`Vec<u8>`) modes to satisfy differing backend APIs.
 
 ## Contributing
 
-Contributions are welcome! Please open issues or pull requests
+PRs and issues are welcome!
 
 ## Disclaimer
 
-zkVMs are rapidly improving, so the API is subject to a lot of change. In terms of scope, although the API is generic, the main use case will be zkEVMs. This may manifest itself in the selection of precompiles that
-may be chosen as defaults.
+zkVMs evolve quickly; expect breaking changes. Although the API is generic, its primary target is **zkEVMs**, which may for example, guide the default set of precompiles.
 
 ## License
 
-MIT OR Apache-2.0
+Licensed under either of
+
+* MIT license (LICENSE‑MIT or [http://opensource.org/licenses/MIT](http://opensource.org/licenses/MIT))
+* Apache License, Version 2.0 (LICENSE‑APACHE or [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0))
+
+at your option.
