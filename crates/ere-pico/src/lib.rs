@@ -109,29 +109,30 @@ impl zkVM<PICO_TARGET> for ErePico {
 #[cfg(test)]
 mod tests {
     use zkvm_interface::Compiler;
-
     use crate::PICO_TARGET;
-
     use std::path::PathBuf;
 
-    // TODO: for now, we just get one test file
-    // TODO: but this should get the whole directory and compile each test
     fn get_compile_test_guest_program_path() -> PathBuf {
         let workspace_dir = env!("CARGO_WORKSPACE_DIR");
-        PathBuf::from(workspace_dir)
+        let path = PathBuf::from(workspace_dir)
             .join("tests")
             .join("pico")
             .join("compile")
             .join("basic")
-            // TODO: Refactor the basic test to not have a lib and app dir
-            .join("app")
-            .canonicalize()
-            .expect("Failed to find or canonicalize test guest program at <CARGO_WORKSPACE_DIR>/tests/compile/pico")
+            .join("app");
+        
+        println!("Attempting to find test guest program at: {}", path.display());
+        println!("Workspace dir is: {}", workspace_dir);
+        
+        path.canonicalize()
+            .expect("Failed to find or canonicalize test guest program at <CARGO_WORKSPACE_DIR>/tests/pico/compile/basic/app")
     }
 
     #[test]
     fn test_compile_trait() {
         let test_guest_path = get_compile_test_guest_program_path();
+        println!("Using test guest path: {}", test_guest_path.display());
+        
         match PICO_TARGET::compile(&test_guest_path) {
             Ok(elf_bytes) => {
                 assert!(!elf_bytes.is_empty(), "ELF bytes should not be empty.");
