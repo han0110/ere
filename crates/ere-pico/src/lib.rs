@@ -31,10 +31,7 @@ impl Compiler for PICO_TARGET {
         }
 
         // 3. Locate the ELF file
-        let elf_path = path
-            .parent()
-            .expect("guest dir always has a parent")
-            .join("elf/riscv32im-pico-zkvm-elf");
+        let elf_path = path.join("elf/riscv32im-pico-zkvm-elf");
 
         if !elf_path.exists() {
             return Err(PicoError::ElfNotFound(elf_path));
@@ -108,9 +105,9 @@ impl zkVM<PICO_TARGET> for ErePico {
 
 #[cfg(test)]
 mod tests {
-    use zkvm_interface::Compiler;
     use crate::PICO_TARGET;
     use std::path::PathBuf;
+    use zkvm_interface::Compiler;
 
     fn get_compile_test_guest_program_path() -> PathBuf {
         let workspace_dir = env!("CARGO_WORKSPACE_DIR");
@@ -120,10 +117,13 @@ mod tests {
             .join("compile")
             .join("basic")
             .join("app");
-        
-        println!("Attempting to find test guest program at: {}", path.display());
+
+        println!(
+            "Attempting to find test guest program at: {}",
+            path.display()
+        );
         println!("Workspace dir is: {}", workspace_dir);
-        
+
         path.canonicalize()
             .expect("Failed to find or canonicalize test guest program at <CARGO_WORKSPACE_DIR>/tests/pico/compile/basic/app")
     }
@@ -132,7 +132,7 @@ mod tests {
     fn test_compile_trait() {
         let test_guest_path = get_compile_test_guest_program_path();
         println!("Using test guest path: {}", test_guest_path.display());
-        
+
         match PICO_TARGET::compile(&test_guest_path) {
             Ok(elf_bytes) => {
                 assert!(!elf_bytes.is_empty(), "ELF bytes should not be empty.");
