@@ -23,7 +23,6 @@
 
 - **Unified Rust API** for compiling, executing, proving, and verifying zkVM programs
 - **Pluggable backends**: swap between zkVMs with minimal code changes
-- **Tests**: each backend has dedicated guest programs and integration tests
 - **SDK installer scripts** for all supported zkVMs
 
 ## Directory Structure
