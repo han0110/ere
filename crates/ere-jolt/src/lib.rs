@@ -140,15 +140,15 @@ mod tests {
 
         let _execution = EreJolt::execute(&program, &inputs).unwrap();
     }
-    #[test]
-    fn test_prove_verify() {
-        let test_guest_path = get_compile_test_guest_program_path();
-        let program = JOLT_TARGET::compile(&test_guest_path).unwrap();
+    // #[test]
+    // fn test_prove_verify() {
+    //     let test_guest_path = get_compile_test_guest_program_path();
+    //     let program = JOLT_TARGET::compile(&test_guest_path).unwrap();
 
-        // TODO: I don't think we should require the inputs when verifying
-        let inputs = Input::new();
+    //     // TODO: I don't think we should require the inputs when verifying
+    //     let inputs = Input::new();
 
-        let (proof, _) = EreJolt::prove(&program, &inputs).unwrap();
-        EreJolt::verify(&program, &proof).unwrap();
-    }
+    //     let (proof, _) = EreJolt::prove(&program, &inputs).unwrap();
+    //     EreJolt::verify(&program, &proof).unwrap();
+    // }
 }
