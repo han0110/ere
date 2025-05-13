@@ -10,6 +10,7 @@ use zkvm_interface::{Compiler, Input, ProgramExecutionReport, ProgramProvingRepo
 mod jolt_methods;
 mod utils;
 
+#[allow(non_camel_case_types)]
 pub struct JOLT_TARGET;
 
 #[derive(Debug, thiserror::Error)]
