@@ -8,17 +8,16 @@
 
 **ere** is a Rust workspace providing a unified interface and toolkit for working with multiple zero-knowledge virtual machines (zkVMs). It abstracts over the differences between zkVMs, allowing you to compile, execute, prove, and verify programs across several backends with a common API.
 
-Supported zkVMs:
+### Supported zkVMs
 
-- **SP1**
-- **OpenVM**
-- **RISC Zero**
-
-Partially supported zkVMs:
-
-- **Jolt** (Prover incompatibility)
-- **Pico** (Missing execute and verify methods in API)
-- **Zisk** (Docker support)
+| zkVM | Status | Compile | Execute | Prove | Verify | Notes |
+|------|--------|---------|---------|-------|--------|-------|
+| SP1 | ✅ Full | ✅ | ✅ | ✅ | ✅ | |
+| OpenVM | ✅ Full | ✅ | ✅ | ✅ | ✅ | |
+| RISC Zero | ✅ Full | ✅ | ✅ | ✅ | ✅ | |
+| Jolt | ⚠️ Partial | ✅ | ✅ | ❌ | ✅ | Prover incompatibility |
+| Pico | ⚠️ Partial | ✅ | ❌ | ✅ | ❌ | Missing execute and verify methods in API |
+| Zisk | ⚠️ Partial | ❌ | ❌ | ❌ | ❌ | Ziskup not working in Docker |
 
 ## Features
 
@@ -109,7 +108,7 @@ cargo test --workspace
 
 ## Contributing
 
-- Contributions are welcome! Please open issues or pull requests
+Contributions are welcome! Please open issues or pull requests
 
 ## Disclaimer
 
