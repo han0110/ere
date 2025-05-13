@@ -111,6 +111,11 @@ cargo test --workspace
 
 - Contributions are welcome! Please open issues or pull requests
 
+## Disclaimer
+
+zkVMs are rapidly improving, so the API is subject to a lot of change. In terms of scope, although the API is generic, the main use case will be zkEVMs. This may manifest itself in the selection of precompiles that
+may be chosen as defaults.
+
 ## License
 
 MIT OR Apache-2.0
