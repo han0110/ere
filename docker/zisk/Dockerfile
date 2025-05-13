@@ -49,4 +49,4 @@ ENV PATH="${ZISK_TOOLS_BIN_DIR}:${PATH}"
 # Verify cargo-zisk is accessible
 RUN echo "Verifying Zisk installation in Dockerfile ..." && cargo +zisk zisk --version
 
-CMD ["/bin/bash"] 
+CMD ["/bin/bash"]
