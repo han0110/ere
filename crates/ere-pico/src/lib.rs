@@ -1,5 +1,6 @@
+use pico_sdk::client::DefaultProverClient;
 use std::process::Command;
-use zkvm_interface::Compiler;
+use zkvm_interface::{Compiler, ProgramProvingReport, zkVM};
 
 mod error;
 use error::PicoError;
@@ -49,13 +50,68 @@ impl Compiler for PICO_TARGET {
     }
 }
 
+pub struct ErePico;
+
+impl zkVM<PICO_TARGET> for ErePico {
+    type Error = PicoError;
+
+    fn execute(
+        _program_bytes: &<PICO_TARGET as Compiler>::Program,
+        _inputs: &zkvm_interface::Input,
+    ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
+        todo!("pico currently does not have an execute method exposed via the SDK")
+    }
+
+    fn prove(
+        program_bytes: &<PICO_TARGET as Compiler>::Program,
+        inputs: &zkvm_interface::Input,
+    ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
+        let client = DefaultProverClient::new(program_bytes);
+
+        let mut stdin = client.new_stdin_builder();
+        for input in inputs.chunked_iter() {
+            stdin.write_slice(input);
+        }
+        let now = std::time::Instant::now();
+        let meta_proof = client.prove(stdin).expect("Failed to generate proof");
+        let elapsed = now.elapsed();
+
+        let mut proof_serialized = Vec::new();
+        for p in meta_proof.0.proofs().iter() {
+            bincode::serialize_into(&mut proof_serialized, p).unwrap();
+        }
+        for p in meta_proof.1.proofs().iter() {
+            bincode::serialize_into(&mut proof_serialized, p).unwrap();
+        }
+
+        for p in meta_proof.0.pv_stream.iter() {
+            bincode::serialize_into(&mut proof_serialized, p).unwrap();
+        }
+        for p in meta_proof.1.pv_stream.iter() {
+            bincode::serialize_into(&mut proof_serialized, p).unwrap();
+        }
+
+        Ok((proof_serialized, ProgramProvingReport::new(elapsed)))
+    }
+
+    fn verify(
+        program_bytes: &<PICO_TARGET as Compiler>::Program,
+        _proof: &[u8],
+    ) -> Result<(), Self::Error> {
+        let client = DefaultProverClient::new(program_bytes);
+
+        let _vk = client.riscv_vk();
+
+        todo!("Verification method missing from sdk")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use zkvm_interface::Compiler;
 
     use crate::PICO_TARGET;
 
-    use super::*;
     use std::path::PathBuf;
 
     // TODO: for now, we just get one test file

@@ -8,7 +8,8 @@ license.workspace = true
 [dependencies]
 zkvm-interface = { workspace = true }
 thiserror = "2"
-anyhow = "*"                          #TOOD: remove for  thiserror
+pico-sdk = { git = "https://github.com/brevis-network/pico" }
+bincode = "1.3.3"
 
 [lints]
 workspace = true
