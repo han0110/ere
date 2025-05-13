@@ -28,19 +28,11 @@ impl Compiler for JOLT_TARGET {
         let manifest_path = path_to_program.to_path_buf().join("Cargo.toml");
         let package_name = package_name_from_manifest(&manifest_path).unwrap();
         let mut program = Program::new(&package_name);
+        program.set_std(true);
         program.set_manifest_path(manifest_path);
-        program.set_memory_size(10485760u64);
-        program.set_stack_size(4096u64);
-        program.set_max_input_size(4096u64);
-        program.set_max_output_size(4096u64);
 
-        // TODO: Note that if this fails, it will panic
+        // TODO: Note that if this fails, it will panic which is why it doesn't return a Result.
         program.build(DEFAULT_TARGET_DIR);
-
-        // Read the ELF file and return its bytes
-        // let elf_path = program.elf.expect("expect elf path");
-        // println!("{:?}", elf_path);
-        // let elf_bytes = std::fs::read(elf_path).unwrap();
 
         Ok(program)
     }
