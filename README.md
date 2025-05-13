@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo-transparent.png" alt="Ere" width="300"/>
+  <img src="assets/logo-blue-white.svg" alt="Ere" width="300"/>
 </p>
 
 <h1 align="center">Ere - Unified zkVM Interface and Toolkit </h1>
