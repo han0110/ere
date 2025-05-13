@@ -29,11 +29,7 @@
 ## Directory Structure
 
 - `crates/zkvm-interface/` — Core traits (`Compiler`, `zkVM`), input serialization, and reporting types
-- `crates/ere-sp1/` — SP1 zkVM backend
-- `crates/ere-jolt/` — Jolt zkVM backend
-- `crates/ere-pico/` — Pico zkVM backend
-- `crates/ere-openvm/` — OpenVM backend
-- `crates/ere-risczero/` — RISC Zero backend
+- `crates/ere-{zkVM}/` — zkVM specific backend
 - `tests/` — Example guest programs and integration tests for each backend
 - `scripts/sdk_installers/` — Shell scripts to install the SDKs for each zkVM
 - `docker/` — Dockerfiles and build contexts for each zkVM environment
