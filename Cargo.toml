@@ -4,7 +4,10 @@ members = [
     "crates/zkvm-interface",
     # zkVMs
     "crates/ere-sp1",
-    "crates/ere-risczero", "crates/ere-openvm", "crates/ere-pico",
+    "crates/ere-risczero",
+    "crates/ere-openvm",
+    "crates/ere-pico",
+    "crates/ere-jolt",
 ]
 resolver = "2"
 
@@ -19,3 +22,9 @@ license = "MIT OR Apache-2.0"
 [workspace.dependencies]
 # local dependencies
 zkvm-interface = { path = "crates/zkvm-interface" }
+
+[patch.crates-io]
+# These patches are only needed by Jolt
+ark-ff = { git = "https://github.com/a16z/arkworks-algebra", branch = "v0.5.0-optimize-mul-u64" }
+ark-ec = { git = "https://github.com/a16z/arkworks-algebra", branch = "v0.5.0-optimize-mul-u64" }
+ark-serialize = { git = "https://github.com/a16z/arkworks-algebra", branch = "v0.5.0-optimize-mul-u64" }

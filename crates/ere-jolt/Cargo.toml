@@ -1,0 +1,24 @@
+[package]
+name = "ere-jolt"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+zkvm-interface = { workspace = true }
+jolt-sdk = { git = "https://github.com/kevaundray/jolt", branch = "kw/ere-fork", features = [
+    "host",
+] }
+jolt-core = { git = "https://github.com/kevaundray/jolt", branch = "kw/ere-fork", features = [
+    "host",
+] }
+jolt = { git = "https://github.com/kevaundray/jolt", branch = "kw/ere-fork", features = [
+    "host",
+] }
+thiserror = "2"
+toml = "0.8"
+ark-serialize = "0.5.0"
+
+[lints]
+workspace = true
