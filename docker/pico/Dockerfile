@@ -8,6 +8,8 @@ FROM ere-base:${BASE_IMAGE_TAG}
 COPY scripts/sdk_installers/install_pico_sdk.sh /tmp/install_pico_sdk.sh
 RUN chmod +x /tmp/install_pico_sdk.sh
 
+RUN rustup default nightly
+
 # Run the Pico SDK installation script.
 # This script installs the specific Rust toolchain (nightly-2024-11-27)
 # and installs pico-cli (as cargo-pico).
