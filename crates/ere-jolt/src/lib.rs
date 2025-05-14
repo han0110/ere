@@ -38,17 +38,24 @@ impl Compiler for JOLT_TARGET {
     }
 }
 
-pub struct EreJolt;
+pub struct EreJolt {
+    program: <JOLT_TARGET as Compiler>::Program,
+}
 
 impl zkVM<JOLT_TARGET> for EreJolt {
     type Error = JoltError;
 
+    fn new(program: <JOLT_TARGET as Compiler>::Program) -> Self {
+        EreJolt { program: program }
+    }
+
     fn execute(
-        program_bytes: &<JOLT_TARGET as Compiler>::Program,
+        &self,
         inputs: &zkvm_interface::Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
         // TODO: check ProgramSummary
-        let summary = program_bytes
+        let summary = self
+            .program
             .clone()
             .trace_analyze::<jolt::F>(inputs.bytes());
         let trace_len = summary.trace_len();
@@ -57,14 +64,14 @@ impl zkVM<JOLT_TARGET> for EreJolt {
     }
 
     fn prove(
-        program: &<JOLT_TARGET as Compiler>::Program,
+        &self,
         inputs: &zkvm_interface::Input,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
         // TODO: make this stateful and do in setup since its expensive and should be done once per program;
-        let preprocessed_key = preprocess_prover(&program);
+        let preprocessed_key = preprocess_prover(&self.program);
 
         let now = std::time::Instant::now();
-        let (output_bytes, proof) = prove_generic(program, preprocessed_key, inputs);
+        let (output_bytes, proof) = prove_generic(&self.program, preprocessed_key, inputs);
         let elapsed = now.elapsed();
 
         let proof_with_public_inputs =
@@ -73,11 +80,8 @@ impl zkVM<JOLT_TARGET> for EreJolt {
         Ok((proof_with_public_inputs, ProgramProvingReport::new(elapsed)))
     }
 
-    fn verify(
-        program: &<JOLT_TARGET as Compiler>::Program,
-        proof_with_public_inputs: &[u8],
-    ) -> Result<(), Self::Error> {
-        let preprocessed_verifier = preprocess_verifier(program);
+    fn verify(&self, proof_with_public_inputs: &[u8]) -> Result<(), Self::Error> {
+        let preprocessed_verifier = preprocess_verifier(&self.program);
         let (public_inputs, proof) =
             deserialize_public_input_with_proof(proof_with_public_inputs).unwrap();
 
@@ -131,7 +135,8 @@ mod tests {
         let mut inputs = Input::new();
         inputs.write(&(1 as u32)).unwrap();
 
-        let _execution = EreJolt::execute(&program, &inputs).unwrap();
+        let zkvm = EreJolt::new(program);
+        let _execution = zkvm.execute(&inputs).unwrap();
     }
     // #[test]
     // fn test_prove_verify() {

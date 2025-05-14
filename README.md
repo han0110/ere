@@ -79,9 +79,9 @@ let guest = std::path::Path::new("guest/hello");
 let elf    = RV32_IM_SUCCINCT_ZKVM_ELF::compile(guest)?;      // compile
 let mut io = Input::new();
 io.write(&42u32)?;
-
-let (proof, _report) = EreSP1::prove(&elf, &io)?;             // prove
-EreSP1::verify(&elf, &proof)?;                                // verify
+let zkvm = EreSP1::new(elf);
+let (proof, _report) = zkvm.prove(&io)?;             // prove
+zkvm.verify(&elf, &proof)?;                                // verify
 ```
 
 ### 4. Run the Test Suite

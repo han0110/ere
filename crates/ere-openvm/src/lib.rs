@@ -41,13 +41,19 @@ impl Compiler for OPENVM_TARGET {
     }
 }
 
-pub struct EreOpenVM;
+pub struct EreOpenVM {
+    program: <OPENVM_TARGET as Compiler>::Program,
+}
 
 impl zkVM<OPENVM_TARGET> for EreOpenVM {
     type Error = OpenVMError;
 
+    fn new(program: <OPENVM_TARGET as Compiler>::Program) -> Self {
+        Self { program }
+    }
+
     fn execute(
-        program: &<OPENVM_TARGET as Compiler>::Program,
+        &self,
         inputs: &zkvm_interface::Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
         let sdk = Sdk::new();
@@ -59,7 +65,7 @@ impl zkVM<OPENVM_TARGET> for EreOpenVM {
             .build();
 
         let exe = sdk
-            .transpile(program.clone(), vm_cfg.transpiler())
+            .transpile(self.program.clone(), vm_cfg.transpiler())
             .map_err(|e| CompileError::Client(e.into()))?;
 
         let mut stdin = StdIn::default();
@@ -75,7 +81,7 @@ impl zkVM<OPENVM_TARGET> for EreOpenVM {
     }
 
     fn prove(
-        program: &<OPENVM_TARGET as Compiler>::Program,
+        &self,
         inputs: &zkvm_interface::Input,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
         // TODO: We need a stateful version in order to not spend a lot of time
@@ -90,7 +96,7 @@ impl zkVM<OPENVM_TARGET> for EreOpenVM {
             .build();
 
         let app_exe = sdk
-            .transpile(program.clone(), vm_cfg.transpiler())
+            .transpile(self.program.clone(), vm_cfg.transpiler())
             .map_err(|e| CompileError::Client(e.into()))?;
 
         let mut stdin = StdIn::default();
@@ -119,10 +125,7 @@ impl zkVM<OPENVM_TARGET> for EreOpenVM {
         Ok((proof_bytes, ProgramProvingReport::new(elapsed)))
     }
 
-    fn verify(
-        _program: &<OPENVM_TARGET as Compiler>::Program,
-        mut proof: &[u8],
-    ) -> Result<(), Self::Error> {
+    fn verify(&self, mut proof: &[u8]) -> Result<(), Self::Error> {
         let sdk = Sdk::new();
         let vm_cfg = SdkVmConfig::builder()
             .system(Default::default())
@@ -183,8 +186,9 @@ mod tests {
         let test_guest_path = get_compile_test_guest_program_path();
         let elf = OPENVM_TARGET::compile(&test_guest_path).expect("compilation failed");
         let empty_input = zkvm_interface::Input::new();
+        let zkvm = EreOpenVM::new(elf);
 
-        EreOpenVM::execute(&elf, &empty_input).unwrap();
+        zkvm.execute(&empty_input).unwrap();
     }
 
     #[test]
@@ -193,7 +197,9 @@ mod tests {
         let elf = OPENVM_TARGET::compile(&test_guest_path).expect("compilation failed");
         let mut input = zkvm_interface::Input::new();
         input.write(&10u64).unwrap();
-        EreOpenVM::execute(&elf, &input).unwrap();
+
+        let zkvm = EreOpenVM::new(elf);
+        zkvm.execute(&input).unwrap();
     }
 
     #[test]
@@ -202,7 +208,9 @@ mod tests {
         let elf = OPENVM_TARGET::compile(&test_guest_path).expect("compilation failed");
         let mut input = zkvm_interface::Input::new();
         input.write(&10u64).unwrap();
-        let (proof, _) = EreOpenVM::prove(&elf, &input).unwrap();
-        EreOpenVM::verify(&elf, &proof).expect("proof should verify");
+
+        let zkvm = EreOpenVM::new(elf);
+        let (proof, _) = zkvm.prove(&input).unwrap();
+        zkvm.verify(&proof).expect("proof should verify");
     }
 }

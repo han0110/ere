@@ -47,23 +47,31 @@ impl Compiler for PICO_TARGET {
     }
 }
 
-pub struct ErePico;
+pub struct ErePico {
+    program: <PICO_TARGET as Compiler>::Program,
+}
 
 impl zkVM<PICO_TARGET> for ErePico {
     type Error = PicoError;
 
+    fn new(program_bytes: <PICO_TARGET as Compiler>::Program) -> Self {
+        ErePico {
+            program: program_bytes,
+        }
+    }
+
     fn execute(
-        _program_bytes: &<PICO_TARGET as Compiler>::Program,
+        &self,
         _inputs: &zkvm_interface::Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
         todo!("pico currently does not have an execute method exposed via the SDK")
     }
 
     fn prove(
-        program_bytes: &<PICO_TARGET as Compiler>::Program,
+        &self,
         inputs: &zkvm_interface::Input,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
-        let client = DefaultProverClient::new(program_bytes);
+        let client = DefaultProverClient::new(&self.program);
 
         let mut stdin = client.new_stdin_builder();
         for input in inputs.chunked_iter() {
@@ -91,11 +99,8 @@ impl zkVM<PICO_TARGET> for ErePico {
         Ok((proof_serialized, ProgramProvingReport::new(elapsed)))
     }
 
-    fn verify(
-        program_bytes: &<PICO_TARGET as Compiler>::Program,
-        _proof: &[u8],
-    ) -> Result<(), Self::Error> {
-        let client = DefaultProverClient::new(program_bytes);
+    fn verify(&self, _proof: &[u8]) -> Result<(), Self::Error> {
+        let client = DefaultProverClient::new(&self.program);
 
         let _vk = client.riscv_vk();
 
