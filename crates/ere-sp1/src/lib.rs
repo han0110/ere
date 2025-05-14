@@ -13,7 +13,9 @@ use error::{ExecuteError, ProveError, SP1Error, VerifyError};
 #[allow(non_camel_case_types)]
 pub struct RV32_IM_SUCCINCT_ZKVM_ELF;
 
-pub struct EreSP1;
+pub struct EreSP1 {
+    program: <RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
+}
 
 impl Compiler for RV32_IM_SUCCINCT_ZKVM_ELF {
     type Error = SP1Error;
@@ -28,8 +30,12 @@ impl Compiler for RV32_IM_SUCCINCT_ZKVM_ELF {
 impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
     type Error = SP1Error;
 
+    fn new(program: <RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program) -> Self {
+        Self { program }
+    }
+
     fn execute(
-        program_bytes: &<RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
+        &self,
         inputs: &zkvm_interface::Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
         // TODO: This is expensive, should move it out and make the struct stateful
@@ -41,7 +47,7 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
         }
 
         let (_, exec_report) = client
-            .execute(&program_bytes, &stdin)
+            .execute(&self.program, &stdin)
             .run()
             .map_err(|e| ExecuteError::Client(e.into()))?;
 
@@ -51,7 +57,7 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
     }
 
     fn prove(
-        program_bytes: &<RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
+        &self,
         inputs: &zkvm_interface::Input,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
         info!("Generating proof…");
@@ -59,7 +65,7 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
         // TODO: This is expensive, should move it out and make the struct stateful
         let client = ProverClient::builder().cpu().build();
         // TODO: This can also be cached
-        let (pk, _vk) = client.setup(&program_bytes);
+        let (pk, _vk) = client.setup(&self.program);
 
         let mut stdin = SP1Stdin::new();
         for input in inputs.chunked_iter() {
@@ -80,14 +86,11 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
         Ok((bytes, ProgramProvingReport::new(proving_time)))
     }
 
-    fn verify(
-        program_bytes: &<RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
-        proof: &[u8],
-    ) -> Result<(), Self::Error> {
+    fn verify(&self, proof: &[u8]) -> Result<(), Self::Error> {
         info!("Verifying proof…");
 
         let client = ProverClient::from_env();
-        let (_pk, vk) = client.setup(&program_bytes);
+        let (_pk, vk) = client.setup(&self.program);
 
         let proof: SP1ProofWithPublicValues = bincode::deserialize(proof)
             .map_err(|err| SP1Error::Verify(VerifyError::Bincode(err)))?;
@@ -132,7 +135,9 @@ mod execute_tests {
         input_builder.write(&n).unwrap();
         input_builder.write(&a).unwrap();
 
-        let result = EreSP1::execute(&elf_bytes, &input_builder);
+        let zkvm = EreSP1::new(elf_bytes);
+
+        let result = zkvm.execute(&input_builder);
 
         if let Err(e) = &result {
             panic!("Execution error: {:?}", e);
@@ -146,7 +151,8 @@ mod execute_tests {
 
         let empty_input = Input::new();
 
-        let result = EreSP1::execute(&elf_bytes, &empty_input);
+        let zkvm = EreSP1::new(elf_bytes);
+        let result = zkvm.execute(&empty_input);
 
         assert!(
             result.is_err(),
@@ -189,7 +195,9 @@ mod prove_tests {
         input_builder.write(&n).unwrap();
         input_builder.write(&a).unwrap();
 
-        let proof_bytes = match EreSP1::prove(&elf_bytes, &input_builder) {
+        let zkvm = EreSP1::new(elf_bytes);
+
+        let proof_bytes = match zkvm.prove(&input_builder) {
             Ok((prove_result, _)) => prove_result,
             Err(err) => {
                 panic!("Proving error in test: {:?}", err);
@@ -198,7 +206,7 @@ mod prove_tests {
 
         assert!(!proof_bytes.is_empty(), "Proof bytes should not be empty.");
 
-        let verify_results = EreSP1::verify(&elf_bytes, &proof_bytes).is_ok();
+        let verify_results = zkvm.verify(&proof_bytes).is_ok();
         assert!(verify_results);
 
         // TODO: Check public inputs
@@ -212,7 +220,8 @@ mod prove_tests {
 
         let empty_input = Input::new();
 
-        let prove_result = EreSP1::prove(&elf_bytes, &empty_input);
+        let zkvm = EreSP1::new(elf_bytes);
+        let prove_result = zkvm.prove(&empty_input);
         assert!(prove_result.is_err())
     }
 }
