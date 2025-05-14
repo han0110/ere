@@ -13,7 +13,6 @@
 
 ## Table of Contents
 
-* [Overview](#overview)
 * [Features](#features)
 * [Supported zkVMs](#supported-zkvms)
 * [Quick Start](#quick-start)
@@ -31,10 +30,6 @@
 * [Contributing](#contributing)
 * [Disclaimer](#disclaimer)
 * [License](#license)
-
-## Overview
-
-**Ere** is a Rust workspace providing a unified interface and toolkit for multiple zero‑knowledge virtual machines (zkVMs). It abstracts away backend differences so you can compile, execute, prove, and verify programs across several backends with a single API.
 
 ## Features
 
