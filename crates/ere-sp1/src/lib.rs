@@ -1,7 +1,10 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use compile::compile_sp1_program;
-use sp1_sdk::{Prover, ProverClient, SP1ProofWithPublicValues, SP1Stdin};
+use sp1_sdk::{
+    CpuProver, Prover, ProverClient, SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin,
+    SP1VerifyingKey,
+};
 use tracing::info;
 use zkvm_interface::{Compiler, ProgramExecutionReport, ProgramProvingReport, zkVM};
 
@@ -12,9 +15,14 @@ use error::{ExecuteError, ProveError, SP1Error, VerifyError};
 
 #[allow(non_camel_case_types)]
 pub struct RV32_IM_SUCCINCT_ZKVM_ELF;
-
 pub struct EreSP1 {
     program: <RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
+    /// Proving key
+    pk: SP1ProvingKey,
+    /// Verification key
+    vk: SP1VerifyingKey,
+    /// Proof and Verification orchestrator
+    client: CpuProver,
 }
 
 impl Compiler for RV32_IM_SUCCINCT_ZKVM_ELF {
@@ -31,29 +39,36 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
     type Error = SP1Error;
 
     fn new(program: <RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program) -> Self {
-        Self { program }
+        let client = ProverClient::builder().cpu().build();
+        let (pk, vk) = client.setup(&program);
+
+        Self {
+            program,
+            client,
+            pk,
+            vk,
+        }
     }
 
     fn execute(
         &self,
         inputs: &zkvm_interface::Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
-        // TODO: This is expensive, should move it out and make the struct stateful
-        let client = ProverClient::builder().cpu().build();
-
         let mut stdin = SP1Stdin::new();
         for input in inputs.chunked_iter() {
             stdin.write_slice(input);
         }
 
-        let (_, exec_report) = client
+        let (_, exec_report) = self
+            .client
             .execute(&self.program, &stdin)
             .run()
             .map_err(|e| ExecuteError::Client(e.into()))?;
 
         let total_num_cycles = exec_report.total_instruction_count();
-        let region_cycles : indexmap::IndexMap<_, _>= exec_report.cycle_tracker.into_iter().collect();
-        
+        let region_cycles: indexmap::IndexMap<_, _> =
+            exec_report.cycle_tracker.into_iter().collect();
+
         let mut ere_report = ProgramExecutionReport::new(total_num_cycles);
         ere_report.region_cycles = region_cycles;
 
@@ -66,19 +81,15 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
         info!("Generating proof…");
 
-        // TODO: This is expensive, should move it out and make the struct stateful
-        let client = ProverClient::builder().cpu().build();
-        // TODO: This can also be cached
-        let (pk, _vk) = client.setup(&self.program);
-
         let mut stdin = SP1Stdin::new();
         for input in inputs.chunked_iter() {
             stdin.write_slice(input);
         }
 
         let start = std::time::Instant::now();
-        let proof_with_inputs = client
-            .prove(&pk, &stdin)
+        let proof_with_inputs = self
+            .client
+            .prove(&self.pk, &stdin)
             .core()
             .run()
             .map_err(|e| ProveError::Client(e.into()))?;
@@ -93,14 +104,11 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
     fn verify(&self, proof: &[u8]) -> Result<(), Self::Error> {
         info!("Verifying proof…");
 
-        let client = ProverClient::from_env();
-        let (_pk, vk) = client.setup(&self.program);
-
         let proof: SP1ProofWithPublicValues = bincode::deserialize(proof)
             .map_err(|err| SP1Error::Verify(VerifyError::Bincode(err)))?;
 
-        client
-            .verify(&proof, &vk)
+        self.client
+            .verify(&proof, &self.vk)
             .map_err(|e| SP1Error::Verify(VerifyError::Client(e.into())))
     }
 }
