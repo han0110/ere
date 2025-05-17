@@ -1,4 +1,5 @@
 use indexmap::IndexMap;
+use serde::{Deserialize, Serialize};
 use std::{path::Path, time::Duration};
 
 mod input;
@@ -38,7 +39,7 @@ pub trait zkVM<C: Compiler> {
 
 /// ProgramExecutionReport produces information about a particular program
 /// execution.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ProgramExecutionReport {
     /// Total number of cycles for the entire workload execution.
     pub total_num_cycles: u64,
@@ -60,7 +61,7 @@ impl ProgramExecutionReport {
 
 /// ProgramProvingReport produces information about proving a particular
 /// program's instance.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ProgramProvingReport {
     pub proving_time: Duration,
 }
