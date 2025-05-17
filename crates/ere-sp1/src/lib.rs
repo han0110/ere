@@ -51,9 +51,13 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
             .run()
             .map_err(|e| ExecuteError::Client(e.into()))?;
 
-        Ok(ProgramExecutionReport::new(
-            exec_report.total_instruction_count(),
-        ))
+        let total_num_cycles = exec_report.total_instruction_count();
+        let region_cycles : indexmap::IndexMap<_, _>= exec_report.cycle_tracker.into_iter().collect();
+        
+        let mut ere_report = ProgramExecutionReport::new(total_num_cycles);
+        ere_report.region_cycles = region_cycles;
+
+        Ok(ere_report)
     }
 
     fn prove(
