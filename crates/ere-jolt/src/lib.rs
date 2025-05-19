@@ -45,7 +45,7 @@ pub struct EreJolt {
 }
 
 impl EreJolt {
-    fn new(
+    pub fn new(
         program: <JOLT_TARGET as Compiler>::Program,
         _resource_type: ProverResourceType,
     ) -> Self {

@@ -48,7 +48,7 @@ pub struct EreOpenVM {
 }
 
 impl EreOpenVM {
-    fn new(
+    pub fn new(
         program: <OPENVM_TARGET as Compiler>::Program,
         _resource_type: ProverResourceType,
     ) -> Self {
