@@ -47,15 +47,16 @@ pub struct EreOpenVM {
     program: <OPENVM_TARGET as Compiler>::Program,
 }
 
-impl zkVM<OPENVM_TARGET> for EreOpenVM {
-    type Error = OpenVMError;
-
+impl EreOpenVM {
     fn new(
         program: <OPENVM_TARGET as Compiler>::Program,
         _resource_type: ProverResourceType,
     ) -> Self {
         Self { program }
     }
+}
+impl zkVM for EreOpenVM {
+    type Error = OpenVMError;
 
     fn execute(
         &self,

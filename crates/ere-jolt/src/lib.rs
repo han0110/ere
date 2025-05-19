@@ -44,15 +44,16 @@ pub struct EreJolt {
     program: <JOLT_TARGET as Compiler>::Program,
 }
 
-impl zkVM<JOLT_TARGET> for EreJolt {
-    type Error = JoltError;
-
+impl EreJolt {
     fn new(
         program: <JOLT_TARGET as Compiler>::Program,
         _resource_type: ProverResourceType,
     ) -> Self {
         EreJolt { program: program }
     }
+}
+impl zkVM for EreJolt {
+    type Error = JoltError;
 
     fn execute(
         &self,

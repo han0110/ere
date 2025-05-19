@@ -25,10 +25,8 @@ pub enum ProverResourceType {
 
 #[allow(non_camel_case_types)]
 /// zkVM trait to abstract away the differences between each zkVM
-pub trait zkVM<C: Compiler> {
+pub trait zkVM {
     type Error: std::error::Error + Send + Sync + 'static;
-
-    fn new(program_bytes: C::Program, resource: ProverResourceType) -> Self;
 
     /// Executes the given program with the inputs accumulated in the Input struct.
     /// For RISCV programs, `program_bytes` will be the ELF binary
