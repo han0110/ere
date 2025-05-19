@@ -24,6 +24,7 @@ pub enum ProverResourceType {
 }
 
 #[allow(non_camel_case_types)]
+#[auto_impl::auto_impl(&, Arc, Box)]
 /// zkVM trait to abstract away the differences between each zkVM
 pub trait zkVM {
     type Error: std::error::Error + Send + Sync + 'static;

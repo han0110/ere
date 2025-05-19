@@ -9531,6 +9531,7 @@ name = "zkvm-interface"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "auto_impl",
  "bincode",
  "indexmap 2.9.0",
  "serde",
