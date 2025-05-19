@@ -51,10 +51,8 @@ pub struct ErePico {
     program: <PICO_TARGET as Compiler>::Program,
 }
 
-impl zkVM<PICO_TARGET> for ErePico {
-    type Error = PicoError;
-
-    fn new(
+impl ErePico {
+    pub fn new(
         program_bytes: <PICO_TARGET as Compiler>::Program,
         _resource_type: ProverResourceType,
     ) -> Self {
@@ -62,6 +60,9 @@ impl zkVM<PICO_TARGET> for ErePico {
             program: program_bytes,
         }
     }
+}
+impl zkVM for ErePico {
+    type Error = PicoError;
 
     fn execute(
         &self,

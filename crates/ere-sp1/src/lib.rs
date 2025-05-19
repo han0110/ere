@@ -92,10 +92,8 @@ impl Compiler for RV32_IM_SUCCINCT_ZKVM_ELF {
     }
 }
 
-impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
-    type Error = SP1Error;
-
-    fn new(
+impl EreSP1 {
+    pub fn new(
         program: <RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
         resource: ProverResourceType,
     ) -> Self {
@@ -112,6 +110,10 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
             vk,
         }
     }
+}
+
+impl zkVM for EreSP1 {
+    type Error = SP1Error;
 
     fn execute(
         &self,
