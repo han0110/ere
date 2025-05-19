@@ -2,16 +2,73 @@
 
 use compile::compile_sp1_program;
 use sp1_sdk::{
-    CpuProver, Prover, ProverClient, SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin,
+    CpuProver, CudaProver, Prover, ProverClient, SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin,
     SP1VerifyingKey,
 };
 use tracing::info;
-use zkvm_interface::{Compiler, ProgramExecutionReport, ProgramProvingReport, zkVM};
+use zkvm_interface::{
+    Compiler, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM,
+};
 
 mod compile;
 
 mod error;
 use error::{ExecuteError, ProveError, SP1Error, VerifyError};
+
+enum ProverType {
+    Cpu(CpuProver),
+    Gpu(CudaProver),
+}
+
+impl ProverType {
+    fn setup(
+        &self,
+        program: &<RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
+    ) -> (SP1ProvingKey, SP1VerifyingKey) {
+        match self {
+            ProverType::Cpu(cpu_prover) => cpu_prover.setup(program),
+            ProverType::Gpu(cuda_prover) => cuda_prover.setup(program),
+        }
+    }
+
+    fn execute(
+        &self,
+        program: &<RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
+        input: &SP1Stdin,
+    ) -> Result<(sp1_sdk::SP1PublicValues, sp1_sdk::ExecutionReport), ExecuteError> {
+        let cpu_executor_builder = match self {
+            ProverType::Cpu(cpu_prover) => cpu_prover.execute(program, input),
+            ProverType::Gpu(cuda_prover) => cuda_prover.execute(program, input),
+        };
+
+        cpu_executor_builder
+            .run()
+            .map_err(|e| ExecuteError::Client(e.into()))
+    }
+    fn prove(
+        &self,
+        pk: &SP1ProvingKey,
+        input: &SP1Stdin,
+    ) -> Result<SP1ProofWithPublicValues, ProveError> {
+        match self {
+            ProverType::Cpu(cpu_prover) => cpu_prover.prove(pk, input).core().run(),
+            ProverType::Gpu(cuda_prover) => cuda_prover.prove(pk, input).core().run(),
+        }
+        .map_err(|e| ProveError::Client(e.into()))
+    }
+
+    fn verify(
+        &self,
+        proof: &SP1ProofWithPublicValues,
+        vk: &SP1VerifyingKey,
+    ) -> Result<(), error::SP1Error> {
+        match self {
+            ProverType::Cpu(cpu_prover) => cpu_prover.verify(proof, vk),
+            ProverType::Gpu(cuda_prover) => cuda_prover.verify(proof, vk),
+        }
+        .map_err(|e| SP1Error::Verify(VerifyError::Client(e.into())))
+    }
+}
 
 #[allow(non_camel_case_types)]
 pub struct RV32_IM_SUCCINCT_ZKVM_ELF;
@@ -22,7 +79,7 @@ pub struct EreSP1 {
     /// Verification key
     vk: SP1VerifyingKey,
     /// Proof and Verification orchestrator
-    client: CpuProver,
+    client: ProverType,
 }
 
 impl Compiler for RV32_IM_SUCCINCT_ZKVM_ELF {
@@ -38,8 +95,14 @@ impl Compiler for RV32_IM_SUCCINCT_ZKVM_ELF {
 impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
     type Error = SP1Error;
 
-    fn new(program: <RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program) -> Self {
-        let client = ProverClient::builder().cpu().build();
+    fn new(
+        program: <RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
+        resource: ProverResourceType,
+    ) -> Self {
+        let client = match resource {
+            ProverResourceType::Cpu => ProverType::Cpu(ProverClient::builder().cpu().build()),
+            ProverResourceType::Gpu => ProverType::Gpu(ProverClient::builder().cuda().build()),
+        };
         let (pk, vk) = client.setup(&program);
 
         Self {
@@ -59,12 +122,7 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
             stdin.write_slice(input);
         }
 
-        let (_, exec_report) = self
-            .client
-            .execute(&self.program, &stdin)
-            .run()
-            .map_err(|e| ExecuteError::Client(e.into()))?;
-
+        let (_, exec_report) = self.client.execute(&self.program, &stdin)?;
         let total_num_cycles = exec_report.total_instruction_count();
         let region_cycles: indexmap::IndexMap<_, _> =
             exec_report.cycle_tracker.into_iter().collect();
@@ -87,12 +145,7 @@ impl zkVM<RV32_IM_SUCCINCT_ZKVM_ELF> for EreSP1 {
         }
 
         let start = std::time::Instant::now();
-        let proof_with_inputs = self
-            .client
-            .prove(&self.pk, &stdin)
-            .core()
-            .run()
-            .map_err(|e| ProveError::Client(e.into()))?;
+        let proof_with_inputs = self.client.prove(&self.pk, &stdin)?;
         let proving_time = start.elapsed();
 
         let bytes = bincode::serialize(&proof_with_inputs)
@@ -147,7 +200,7 @@ mod execute_tests {
         input_builder.write(&n).unwrap();
         input_builder.write(&a).unwrap();
 
-        let zkvm = EreSP1::new(elf_bytes);
+        let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
 
         let result = zkvm.execute(&input_builder);
 
@@ -163,7 +216,7 @@ mod execute_tests {
 
         let empty_input = Input::new();
 
-        let zkvm = EreSP1::new(elf_bytes);
+        let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
         let result = zkvm.execute(&empty_input);
 
         assert!(
@@ -207,7 +260,7 @@ mod prove_tests {
         input_builder.write(&n).unwrap();
         input_builder.write(&a).unwrap();
 
-        let zkvm = EreSP1::new(elf_bytes);
+        let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
 
         let proof_bytes = match zkvm.prove(&input_builder) {
             Ok((prove_result, _)) => prove_result,
@@ -232,7 +285,7 @@ mod prove_tests {
 
         let empty_input = Input::new();
 
-        let zkvm = EreSP1::new(elf_bytes);
+        let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
         let prove_result = zkvm.prove(&empty_input);
         assert!(prove_result.is_err())
     }

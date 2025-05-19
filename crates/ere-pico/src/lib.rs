@@ -1,6 +1,6 @@
 use pico_sdk::client::DefaultProverClient;
 use std::process::Command;
-use zkvm_interface::{Compiler, ProgramProvingReport, zkVM};
+use zkvm_interface::{Compiler, ProgramProvingReport, ProverResourceType, zkVM};
 
 mod error;
 use error::PicoError;
@@ -54,7 +54,10 @@ pub struct ErePico {
 impl zkVM<PICO_TARGET> for ErePico {
     type Error = PicoError;
 
-    fn new(program_bytes: <PICO_TARGET as Compiler>::Program) -> Self {
+    fn new(
+        program_bytes: <PICO_TARGET as Compiler>::Program,
+        _resource_type: ProverResourceType,
+    ) -> Self {
         ErePico {
             program: program_bytes,
         }
