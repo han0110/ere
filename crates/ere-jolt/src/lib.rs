@@ -5,7 +5,9 @@ use utils::{
     deserialize_public_input_with_proof, package_name_from_manifest,
     serialize_public_input_with_proof,
 };
-use zkvm_interface::{Compiler, Input, ProgramExecutionReport, ProgramProvingReport, zkVM};
+use zkvm_interface::{
+    Compiler, Input, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM,
+};
 
 mod jolt_methods;
 mod utils;
@@ -45,7 +47,10 @@ pub struct EreJolt {
 impl zkVM<JOLT_TARGET> for EreJolt {
     type Error = JoltError;
 
-    fn new(program: <JOLT_TARGET as Compiler>::Program) -> Self {
+    fn new(
+        program: <JOLT_TARGET as Compiler>::Program,
+        _resource_type: ProverResourceType,
+    ) -> Self {
         EreJolt { program: program }
     }
 
@@ -105,7 +110,7 @@ impl zkVM<JOLT_TARGET> for EreJolt {
 mod tests {
     use crate::{EreJolt, JOLT_TARGET};
     use std::path::PathBuf;
-    use zkvm_interface::{Compiler, Input, zkVM};
+    use zkvm_interface::{Compiler, Input, ProverResourceType, zkVM};
 
     // TODO: for now, we just get one test file
     // TODO: but this should get the whole directory and compile each test
@@ -135,7 +140,7 @@ mod tests {
         let mut inputs = Input::new();
         inputs.write(&(1 as u32)).unwrap();
 
-        let zkvm = EreJolt::new(program);
+        let zkvm = EreJolt::new(program, ProverResourceType::Cpu);
         let _execution = zkvm.execute(&inputs).unwrap();
     }
     // #[test]

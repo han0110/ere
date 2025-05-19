@@ -15,12 +15,20 @@ pub trait Compiler {
     fn compile(path_to_program: &Path) -> Result<Self::Program, Self::Error>;
 }
 
+/// ResourceType specifies what resource will be used to create the proofs.
+#[derive(Debug, Copy, Clone, Default)]
+pub enum ProverResourceType {
+    #[default]
+    Cpu,
+    Gpu,
+}
+
 #[allow(non_camel_case_types)]
 /// zkVM trait to abstract away the differences between each zkVM
 pub trait zkVM<C: Compiler> {
     type Error: std::error::Error + Send + Sync + 'static;
 
-    fn new(program_bytes: C::Program) -> Self;
+    fn new(program_bytes: C::Program, resource: ProverResourceType) -> Self;
 
     /// Executes the given program with the inputs accumulated in the Input struct.
     /// For RISCV programs, `program_bytes` will be the ELF binary

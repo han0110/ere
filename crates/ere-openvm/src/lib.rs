@@ -11,7 +11,9 @@ use openvm_stark_sdk::config::{
     baby_bear_poseidon2::BabyBearPoseidon2Engine,
 };
 use openvm_transpiler::elf::Elf;
-use zkvm_interface::{Compiler, ProgramExecutionReport, ProgramProvingReport, zkVM};
+use zkvm_interface::{
+    Compiler, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM,
+};
 
 mod error;
 use error::{CompileError, OpenVMError, VerifyError};
@@ -48,7 +50,10 @@ pub struct EreOpenVM {
 impl zkVM<OPENVM_TARGET> for EreOpenVM {
     type Error = OpenVMError;
 
-    fn new(program: <OPENVM_TARGET as Compiler>::Program) -> Self {
+    fn new(
+        program: <OPENVM_TARGET as Compiler>::Program,
+        _resource_type: ProverResourceType,
+    ) -> Self {
         Self { program }
     }
 
@@ -186,7 +191,7 @@ mod tests {
         let test_guest_path = get_compile_test_guest_program_path();
         let elf = OPENVM_TARGET::compile(&test_guest_path).expect("compilation failed");
         let empty_input = zkvm_interface::Input::new();
-        let zkvm = EreOpenVM::new(elf);
+        let zkvm = EreOpenVM::new(elf, ProverResourceType::Cpu);
 
         zkvm.execute(&empty_input).unwrap();
     }
@@ -198,7 +203,7 @@ mod tests {
         let mut input = zkvm_interface::Input::new();
         input.write(&10u64).unwrap();
 
-        let zkvm = EreOpenVM::new(elf);
+        let zkvm = EreOpenVM::new(elf, ProverResourceType::Cpu);
         zkvm.execute(&input).unwrap();
     }
 
@@ -209,7 +214,7 @@ mod tests {
         let mut input = zkvm_interface::Input::new();
         input.write(&10u64).unwrap();
 
-        let zkvm = EreOpenVM::new(elf);
+        let zkvm = EreOpenVM::new(elf, ProverResourceType::Cpu);
         let (proof, _) = zkvm.prove(&input).unwrap();
         zkvm.verify(&proof).expect("proof should verify");
     }
