@@ -12,7 +12,7 @@ use openvm_stark_sdk::config::{
 };
 use openvm_transpiler::elf::Elf;
 use zkvm_interface::{
-    Compiler, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM,
+    Compiler, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM, zkVMError,
 };
 
 mod error;
@@ -56,12 +56,10 @@ impl EreOpenVM {
     }
 }
 impl zkVM for EreOpenVM {
-    type Error = OpenVMError;
-
     fn execute(
         &self,
         inputs: &zkvm_interface::Input,
-    ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
+    ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         let sdk = Sdk::new();
         let vm_cfg = SdkVmConfig::builder()
             .system(Default::default())
@@ -72,7 +70,8 @@ impl zkVM for EreOpenVM {
 
         let exe = sdk
             .transpile(self.program.clone(), vm_cfg.transpiler())
-            .map_err(|e| CompileError::Client(e.into()))?;
+            .map_err(|e| CompileError::Client(e.into()))
+            .map_err(OpenVMError::from)?;
 
         let mut stdin = StdIn::default();
         for input in inputs.chunked_iter() {
@@ -81,7 +80,8 @@ impl zkVM for EreOpenVM {
 
         let _outputs = sdk
             .execute(exe.clone(), vm_cfg.clone(), stdin)
-            .map_err(|e| CompileError::Client(e.into()))?;
+            .map_err(|e| CompileError::Client(e.into()))
+            .map_err(OpenVMError::from)?;
 
         Ok(ProgramExecutionReport::default())
     }
@@ -89,7 +89,7 @@ impl zkVM for EreOpenVM {
     fn prove(
         &self,
         inputs: &zkvm_interface::Input,
-    ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
+    ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), zkVMError> {
         // TODO: We need a stateful version in order to not spend a lot of time
         // TODO doing things like computing the pk and vk.
 
@@ -103,7 +103,8 @@ impl zkVM for EreOpenVM {
 
         let app_exe = sdk
             .transpile(self.program.clone(), vm_cfg.transpiler())
-            .map_err(|e| CompileError::Client(e.into()))?;
+            .map_err(|e| CompileError::Client(e.into()))
+            .map_err(OpenVMError::from)?;
 
         let mut stdin = StdIn::default();
         for input in inputs.chunked_iter() {
@@ -131,7 +132,7 @@ impl zkVM for EreOpenVM {
         Ok((proof_bytes, ProgramProvingReport::new(elapsed)))
     }
 
-    fn verify(&self, mut proof: &[u8]) -> Result<(), Self::Error> {
+    fn verify(&self, mut proof: &[u8]) -> Result<(), zkVMError> {
         let sdk = Sdk::new();
         let vm_cfg = SdkVmConfig::builder()
             .system(Default::default())
@@ -150,6 +151,7 @@ impl zkVM for EreOpenVM {
         sdk.verify_app_proof(&app_vk, &proof)
             .map(|_payload| ())
             .map_err(|e| OpenVMError::Verify(VerifyError::Client(e.into())))
+            .map_err(zkVMError::from)
     }
 }
 
