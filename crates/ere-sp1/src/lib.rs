@@ -7,7 +7,7 @@ use sp1_sdk::{
 };
 use tracing::info;
 use zkvm_interface::{
-    Compiler, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM,
+    Compiler, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM, zkVMError,
 };
 
 mod compile;
@@ -35,7 +35,7 @@ impl ProverType {
         &self,
         program: &<RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
         input: &SP1Stdin,
-    ) -> Result<(sp1_sdk::SP1PublicValues, sp1_sdk::ExecutionReport), ExecuteError> {
+    ) -> Result<(sp1_sdk::SP1PublicValues, sp1_sdk::ExecutionReport), SP1Error> {
         let cpu_executor_builder = match self {
             ProverType::Cpu(cpu_prover) => cpu_prover.execute(program, input),
             ProverType::Gpu(cuda_prover) => cuda_prover.execute(program, input),
@@ -43,25 +43,25 @@ impl ProverType {
 
         cpu_executor_builder
             .run()
-            .map_err(|e| ExecuteError::Client(e.into()))
+            .map_err(|e| SP1Error::Execute(ExecuteError::Client(e.into())))
     }
     fn prove(
         &self,
         pk: &SP1ProvingKey,
         input: &SP1Stdin,
-    ) -> Result<SP1ProofWithPublicValues, ProveError> {
+    ) -> Result<SP1ProofWithPublicValues, SP1Error> {
         match self {
             ProverType::Cpu(cpu_prover) => cpu_prover.prove(pk, input).core().run(),
             ProverType::Gpu(cuda_prover) => cuda_prover.prove(pk, input).core().run(),
         }
-        .map_err(|e| ProveError::Client(e.into()))
+        .map_err(|e| SP1Error::Prove(ProveError::Client(e.into())))
     }
 
     fn verify(
         &self,
         proof: &SP1ProofWithPublicValues,
         vk: &SP1VerifyingKey,
-    ) -> Result<(), error::SP1Error> {
+    ) -> Result<(), SP1Error> {
         match self {
             ProverType::Cpu(cpu_prover) => cpu_prover.verify(proof, vk),
             ProverType::Gpu(cuda_prover) => cuda_prover.verify(proof, vk),
@@ -113,12 +113,10 @@ impl EreSP1 {
 }
 
 impl zkVM for EreSP1 {
-    type Error = SP1Error;
-
     fn execute(
         &self,
         inputs: &zkvm_interface::Input,
-    ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
+    ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         let mut stdin = SP1Stdin::new();
         for input in inputs.chunked_iter() {
             stdin.write_slice(input);
@@ -138,7 +136,7 @@ impl zkVM for EreSP1 {
     fn prove(
         &self,
         inputs: &zkvm_interface::Input,
-    ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
+    ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), zkVMError> {
         info!("Generating proof…");
 
         let mut stdin = SP1Stdin::new();
@@ -156,7 +154,7 @@ impl zkVM for EreSP1 {
         Ok((bytes, ProgramProvingReport::new(proving_time)))
     }
 
-    fn verify(&self, proof: &[u8]) -> Result<(), Self::Error> {
+    fn verify(&self, proof: &[u8]) -> Result<(), zkVMError> {
         info!("Verifying proof…");
 
         let proof: SP1ProofWithPublicValues = bincode::deserialize(proof)
@@ -164,7 +162,7 @@ impl zkVM for EreSP1 {
 
         self.client
             .verify(&proof, &self.vk)
-            .map_err(|e| SP1Error::Verify(VerifyError::Client(e.into())))
+            .map_err(zkVMError::from)
     }
 }
 

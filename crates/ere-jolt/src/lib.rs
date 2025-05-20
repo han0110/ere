@@ -1,3 +1,4 @@
+use error::JoltError;
 use jolt_core::host::Program;
 use jolt_methods::{preprocess_prover, preprocess_verifier, prove_generic, verify_generic};
 use jolt_sdk::host::DEFAULT_TARGET_DIR;
@@ -7,19 +8,15 @@ use utils::{
 };
 use zkvm_interface::{
     Compiler, Input, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM,
+    zkVMError,
 };
 
+mod error;
 mod jolt_methods;
 mod utils;
 
 #[allow(non_camel_case_types)]
 pub struct JOLT_TARGET;
-
-#[derive(Debug, thiserror::Error)]
-pub enum JoltError {
-    #[error("Proof verification failed")]
-    ProofVerificationFailed,
-}
 
 impl Compiler for JOLT_TARGET {
     type Error = JoltError;
@@ -53,12 +50,10 @@ impl EreJolt {
     }
 }
 impl zkVM for EreJolt {
-    type Error = JoltError;
-
     fn execute(
         &self,
         inputs: &zkvm_interface::Input,
-    ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
+    ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         // TODO: check ProgramSummary
         let summary = self
             .program
@@ -72,7 +67,7 @@ impl zkVM for EreJolt {
     fn prove(
         &self,
         inputs: &zkvm_interface::Input,
-    ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
+    ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), zkVMError> {
         // TODO: make this stateful and do in setup since its expensive and should be done once per program;
         let preprocessed_key = preprocess_prover(&self.program);
 
@@ -86,7 +81,7 @@ impl zkVM for EreJolt {
         Ok((proof_with_public_inputs, ProgramProvingReport::new(elapsed)))
     }
 
-    fn verify(&self, proof_with_public_inputs: &[u8]) -> Result<(), Self::Error> {
+    fn verify(&self, proof_with_public_inputs: &[u8]) -> Result<(), zkVMError> {
         let preprocessed_verifier = preprocess_verifier(&self.program);
         let (public_inputs, proof) =
             deserialize_public_input_with_proof(proof_with_public_inputs).unwrap();
@@ -102,7 +97,7 @@ impl zkVM for EreJolt {
         if valid {
             Ok(())
         } else {
-            Err(JoltError::ProofVerificationFailed)
+            Err(JoltError::ProofVerificationFailed).map_err(zkVMError::from)
         }
     }
 }
