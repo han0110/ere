@@ -23,6 +23,13 @@ impl Input {
         Ok(())
     }
 
+    pub fn write_slice(&mut self, slice: &[u8]) {
+        let start = self.buf.len();
+        self.buf.extend_from_slice(slice);
+        let end = self.buf.len();
+        self.ranges.push((start, end - start));
+    }
+
     /// Number of elements written.
     pub fn len(&self) -> usize {
         self.ranges.len()
@@ -31,8 +38,6 @@ impl Input {
     pub fn is_empty(&self) -> bool {
         self.ranges.is_empty()
     }
-
-    /* ---------------- Read‑side helpers ---------------- */
 
     /// Entire concatenated payload as one slice.
     pub fn bytes(&self) -> &[u8] {
@@ -92,5 +97,33 @@ mod tests {
 
         // iter() covers same length
         assert_eq!(input.iter().count(), expected.len());
+    }
+
+    #[test]
+    fn input_write_slice() {
+        let mut input = Input::new();
+
+        let slice1 = [1, 2, 3, 4];
+        let slice2 = [5, 6, 7, 8, 9];
+
+        input.write_slice(&slice1);
+        input.write_slice(&slice2);
+
+        assert_eq!(input.len(), 2);
+        assert!(!input.is_empty());
+
+        // Check chunked iteration
+        let chunks: Vec<&[u8]> = input.chunked_iter().collect();
+        assert_eq!(chunks.len(), 2);
+        assert_eq!(chunks[0], &slice1);
+        assert_eq!(chunks[1], &slice2);
+
+        // Check contiguous bytes
+        let mut expected = Vec::<u8>::new();
+        expected.extend_from_slice(&slice1);
+        expected.extend_from_slice(&slice2);
+        assert_eq!(input.bytes(), expected.as_slice());
+
+        assert_eq!(input.iter().count(), slice1.len() + slice2.len());
     }
 }

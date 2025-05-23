@@ -1,6 +1,8 @@
 use pico_sdk::client::DefaultProverClient;
 use std::process::Command;
-use zkvm_interface::{Compiler, ProgramExecutionReport, ProgramProvingReport, zkVM};
+use zkvm_interface::{
+    Compiler, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM, zkVMError,
+};
 
 mod error;
 use error::PicoError;
@@ -51,19 +53,21 @@ pub struct ErePico {
     program: <PICO_TARGET as Compiler>::Program,
 }
 
-impl zkVM<PICO_TARGET> for ErePico {
-    type Error = PicoError;
-
-    fn new(program_bytes: <PICO_TARGET as Compiler>::Program) -> Self {
+impl ErePico {
+    pub fn new(
+        program_bytes: <PICO_TARGET as Compiler>::Program,
+        _resource_type: ProverResourceType,
+    ) -> Self {
         ErePico {
             program: program_bytes,
         }
     }
-
+}
+impl zkVM for ErePico {
     fn execute(
         &self,
-        inputs: &zkvm_interface::Input,
-    ) -> Result<zkvm_interface::ProgramExecutionReport, Self::Error> {
+        _inputs: &zkvm_interface::Input,
+    ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         let client = DefaultProverClient::new(&self.program);
 
         let mut stdin = client.new_stdin_builder();
@@ -78,7 +82,7 @@ impl zkVM<PICO_TARGET> for ErePico {
     fn prove(
         &self,
         inputs: &zkvm_interface::Input,
-    ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), Self::Error> {
+    ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), zkVMError> {
         let client = DefaultProverClient::new(&self.program);
 
         let mut stdin = client.new_stdin_builder();
@@ -107,7 +111,7 @@ impl zkVM<PICO_TARGET> for ErePico {
         Ok((proof_serialized, ProgramProvingReport::new(elapsed)))
     }
 
-    fn verify(&self, proof: &[u8]) -> Result<(), Self::Error> {
+    fn verify(&self, _proof: &[u8]) -> Result<(), zkVMError> {
         let client = DefaultProverClient::new(&self.program);
         let _vk = client.riscv_vk();
         todo!("Verification method missing from sdk")
