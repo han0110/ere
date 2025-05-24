@@ -1,4 +1,4 @@
-use zkvm_interface::Input;
+use zkvm_interface::{Input, InputErased};
 
 pub fn preprocess_prover(
     program: &jolt::host::Program,
@@ -40,8 +40,8 @@ pub fn preprocess_verifier(
 pub fn verify_generic(
     proof: jolt::JoltHyperKZGProof,
     // TODO: input should be private input
-    inputs: Input,
-    outputs: Input,
+    inputs: InputErased,
+    outputs: InputErased,
     preprocessing: jolt::JoltVerifierPreprocessing<4, jolt::F, jolt::PCS, jolt::ProofTranscript>,
 ) -> bool {
     use jolt::{Jolt, RV32IJoltVM, tracer};
@@ -53,8 +53,9 @@ pub fn verify_generic(
         preprocessing.memory_layout.max_output_size,
     );
 
-    io_device.inputs = inputs.bytes().to_vec();
-    io_device.outputs = outputs.bytes().to_vec();
+    // TODO: FIXME
+    // io_device.inputs = inputs.bytes().to_vec();
+    // io_device.outputs = outputs.bytes().to_vec();
 
     RV32IJoltVM::verify(
         preprocessing,
@@ -69,14 +70,15 @@ pub fn verify_generic(
 pub fn prove_generic(
     program: &jolt::host::Program,
     preprocessing: jolt::JoltProverPreprocessing<4, jolt::F, jolt::PCS, jolt::ProofTranscript>,
-    inputs: &Input,
+    inputs: &InputErased,
 ) -> (Vec<u8>, jolt::JoltHyperKZGProof) {
     use jolt::{Jolt, RV32IJoltVM};
 
     let mut program = program.clone();
 
     // Convert inputs to a flat vector
-    let input_bytes = inputs.bytes().to_vec();
+    // TODO: FIXME
+    let input_bytes = Vec::new();
 
     let (io_device, trace) = program.trace(&input_bytes);
 

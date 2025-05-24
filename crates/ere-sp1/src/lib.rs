@@ -7,7 +7,8 @@ use sp1_sdk::{
 };
 use tracing::info;
 use zkvm_interface::{
-    Compiler, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM, zkVMError,
+    Compiler, InputErased, InputItem, ProgramExecutionReport, ProgramProvingReport,
+    ProverResourceType, zkVM, zkVMError,
 };
 
 mod compile;
@@ -115,11 +116,14 @@ impl EreSP1 {
 impl zkVM for EreSP1 {
     fn execute(
         &self,
-        inputs: &zkvm_interface::Input,
+        inputs: &InputErased,
     ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         let mut stdin = SP1Stdin::new();
-        for input in inputs.chunked_iter() {
-            stdin.write_slice(input);
+        for input in inputs.iter() {
+            match input {
+                InputItem::Object(serialize) => stdin.write(serialize),
+                InputItem::Bytes(items) => stdin.write_slice(items),
+            }
         }
 
         let (_, exec_report) = self.client.execute(&self.program, &stdin)?;
@@ -135,13 +139,16 @@ impl zkVM for EreSP1 {
 
     fn prove(
         &self,
-        inputs: &zkvm_interface::Input,
+        inputs: &zkvm_interface::InputErased,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), zkVMError> {
         info!("Generating proof…");
 
         let mut stdin = SP1Stdin::new();
-        for input in inputs.chunked_iter() {
-            stdin.write_slice(input);
+        for input in inputs.iter() {
+            match input {
+                InputItem::Object(serialize) => stdin.write(serialize),
+                InputItem::Bytes(items) => stdin.write_slice(items),
+            };
         }
 
         let start = std::time::Instant::now();
@@ -171,7 +178,7 @@ mod execute_tests {
     use std::path::PathBuf;
 
     use super::*;
-    use zkvm_interface::Input;
+    use zkvm_interface::InputErased;
 
     fn get_compiled_test_sp1_elf() -> Result<Vec<u8>, SP1Error> {
         let test_guest_path = get_execute_test_guest_program_path();
@@ -194,11 +201,11 @@ mod execute_tests {
         let elf_bytes = get_compiled_test_sp1_elf()
             .expect("Failed to compile test SP1 guest for execution test");
 
-        let mut input_builder = Input::new();
+        let mut input_builder = InputErased::new();
         let n: u32 = 42;
         let a: u16 = 42;
-        input_builder.write(&n).unwrap();
-        input_builder.write(&a).unwrap();
+        input_builder.write(n);
+        input_builder.write(a);
 
         let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
 
@@ -214,7 +221,7 @@ mod execute_tests {
         let elf_bytes = get_compiled_test_sp1_elf()
             .expect("Failed to compile test SP1 guest for execution test");
 
-        let empty_input = Input::new();
+        let empty_input = InputErased::new();
 
         let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
         let result = zkvm.execute(&empty_input);
@@ -231,7 +238,7 @@ mod prove_tests {
     use std::path::PathBuf;
 
     use super::*;
-    use zkvm_interface::Input;
+    use zkvm_interface::InputErased;
 
     fn get_prove_test_guest_program_path() -> PathBuf {
         let workspace_dir = env!("CARGO_WORKSPACE_DIR");
@@ -254,11 +261,11 @@ mod prove_tests {
         let elf_bytes = get_compiled_test_sp1_elf_for_prove()
             .expect("Failed to compile test SP1 guest for proving test");
 
-        let mut input_builder = Input::new();
+        let mut input_builder = InputErased::new();
         let n: u32 = 42;
         let a: u16 = 42;
-        input_builder.write(&n).unwrap();
-        input_builder.write(&a).unwrap();
+        input_builder.write(n);
+        input_builder.write(a);
 
         let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
 
@@ -283,7 +290,7 @@ mod prove_tests {
         let elf_bytes = get_compiled_test_sp1_elf_for_prove()
             .expect("Failed to compile test SP1 guest for proving test");
 
-        let empty_input = Input::new();
+        let empty_input = InputErased::new();
 
         let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
         let prove_result = zkvm.prove(&empty_input);

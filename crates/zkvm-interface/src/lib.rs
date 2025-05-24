@@ -45,10 +45,10 @@ pub enum zkVMError {
 pub trait zkVM {
     /// Executes the given program with the inputs accumulated in the Input struct.
     /// For RISCV programs, `program_bytes` will be the ELF binary
-    fn execute(&self, inputs: &Input) -> Result<ProgramExecutionReport, zkVMError>;
+    fn execute(&self, inputs: &InputErased) -> Result<ProgramExecutionReport, zkVMError>;
 
     /// Creates a proof for a given program
-    fn prove(&self, inputs: &Input) -> Result<(Vec<u8>, ProgramProvingReport), zkVMError>;
+    fn prove(&self, inputs: &InputErased) -> Result<(Vec<u8>, ProgramProvingReport), zkVMError>;
 
     /// Verifies a proof for the given program
     /// TODO: Pass public inputs too and check that they match if they come with the
