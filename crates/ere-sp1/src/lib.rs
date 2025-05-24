@@ -7,7 +7,7 @@ use sp1_sdk::{
 };
 use tracing::info;
 use zkvm_interface::{
-    Compiler, InputErased, InputItem, ProgramExecutionReport, ProgramProvingReport,
+    Compiler, Input, InputItem, ProgramExecutionReport, ProgramProvingReport,
     ProverResourceType, zkVM, zkVMError,
 };
 
@@ -116,7 +116,7 @@ impl EreSP1 {
 impl zkVM for EreSP1 {
     fn execute(
         &self,
-        inputs: &InputErased,
+        inputs: &Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         let mut stdin = SP1Stdin::new();
         for input in inputs.iter() {
@@ -139,7 +139,7 @@ impl zkVM for EreSP1 {
 
     fn prove(
         &self,
-        inputs: &zkvm_interface::InputErased,
+        inputs: &zkvm_interface::Input,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), zkVMError> {
         info!("Generating proof…");
 
@@ -178,7 +178,7 @@ mod execute_tests {
     use std::path::PathBuf;
 
     use super::*;
-    use zkvm_interface::InputErased;
+    use zkvm_interface::Input;
 
     fn get_compiled_test_sp1_elf() -> Result<Vec<u8>, SP1Error> {
         let test_guest_path = get_execute_test_guest_program_path();
@@ -201,7 +201,7 @@ mod execute_tests {
         let elf_bytes = get_compiled_test_sp1_elf()
             .expect("Failed to compile test SP1 guest for execution test");
 
-        let mut input_builder = InputErased::new();
+        let mut input_builder = Input::new();
         let n: u32 = 42;
         let a: u16 = 42;
         input_builder.write(n);
@@ -221,7 +221,7 @@ mod execute_tests {
         let elf_bytes = get_compiled_test_sp1_elf()
             .expect("Failed to compile test SP1 guest for execution test");
 
-        let empty_input = InputErased::new();
+        let empty_input = Input::new();
 
         let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
         let result = zkvm.execute(&empty_input);
@@ -238,7 +238,7 @@ mod prove_tests {
     use std::path::PathBuf;
 
     use super::*;
-    use zkvm_interface::InputErased;
+    use zkvm_interface::Input;
 
     fn get_prove_test_guest_program_path() -> PathBuf {
         let workspace_dir = env!("CARGO_WORKSPACE_DIR");
@@ -261,7 +261,7 @@ mod prove_tests {
         let elf_bytes = get_compiled_test_sp1_elf_for_prove()
             .expect("Failed to compile test SP1 guest for proving test");
 
-        let mut input_builder = InputErased::new();
+        let mut input_builder = Input::new();
         let n: u32 = 42;
         let a: u16 = 42;
         input_builder.write(n);
@@ -290,7 +290,7 @@ mod prove_tests {
         let elf_bytes = get_compiled_test_sp1_elf_for_prove()
             .expect("Failed to compile test SP1 guest for proving test");
 
-        let empty_input = InputErased::new();
+        let empty_input = Input::new();
 
         let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
         let prove_result = zkvm.prove(&empty_input);

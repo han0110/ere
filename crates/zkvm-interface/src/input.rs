@@ -9,16 +9,16 @@ pub enum InputItem {
 }
 
 /// Represents a builder for input data to be passed to a ZKVM guest program.
-pub struct InputErased {
+pub struct Input {
     items: Vec<InputItem>,
 }
-impl Default for InputErased {
+impl Default for Input {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl InputErased {
+impl Input {
     /// Create an empty input buffer.
     pub fn new() -> Self {
         Self {
@@ -96,7 +96,7 @@ mod input_erased_tests {
 
     #[test]
     fn test_write_object() {
-        let mut input = InputErased::new();
+        let mut input = Input::new();
 
         let person = Person {
             name: "Alice".to_string(),
@@ -114,7 +114,7 @@ mod input_erased_tests {
 
     #[test]
     fn test_write_bytes() {
-        let mut input = InputErased::new();
+        let mut input = Input::new();
 
         let bytes = vec![1, 2, 3, 4, 5];
         input.write_bytes(bytes.clone());
@@ -129,7 +129,7 @@ mod input_erased_tests {
 
     #[test]
     fn test_write_serialized() {
-        let mut input = InputErased::new();
+        let mut input = Input::new();
 
         let person = Person {
             name: "Bob".to_string(),
@@ -150,7 +150,7 @@ mod input_erased_tests {
 
     #[test]
     fn test_mixed_usage() {
-        let mut input = InputErased::new();
+        let mut input = Input::new();
 
         let person = Person {
             name: "Charlie".to_string(),
@@ -187,7 +187,7 @@ mod input_erased_tests {
 
     #[test]
     fn test_as_bytes() {
-        let mut input = InputErased::new();
+        let mut input = Input::new();
 
         // Add an object
         input.write(42i32);
@@ -208,7 +208,7 @@ mod input_erased_tests {
 
     #[test]
     fn test_iteration() {
-        let mut input = InputErased::new();
+        let mut input = Input::new();
 
         input.write(1);
         input.write(2);

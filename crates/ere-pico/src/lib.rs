@@ -66,14 +66,14 @@ impl ErePico {
 impl zkVM for ErePico {
     fn execute(
         &self,
-        _inputs: &zkvm_interface::InputErased,
+        _inputs: &zkvm_interface::Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         todo!("pico currently does not have an execute method exposed via the SDK")
     }
 
     fn prove(
         &self,
-        inputs: &zkvm_interface::InputErased,
+        inputs: &zkvm_interface::Input,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), zkVMError> {
         let client = DefaultProverClient::new(&self.program);
 

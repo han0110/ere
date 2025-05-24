@@ -7,7 +7,7 @@ use utils::{
     serialize_public_input_with_proof,
 };
 use zkvm_interface::{
-    Compiler, InputErased, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM,
+    Compiler, Input, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM,
     zkVMError,
 };
 
@@ -52,7 +52,7 @@ impl EreJolt {
 impl zkVM for EreJolt {
     fn execute(
         &self,
-        _inputs: &InputErased,
+        _inputs: &Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         // TODO: check ProgramSummary
         // TODO: FIXME
@@ -68,7 +68,7 @@ impl zkVM for EreJolt {
 
     fn prove(
         &self,
-        inputs: &InputErased,
+        inputs: &Input,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), zkVMError> {
         // TODO: make this stateful and do in setup since its expensive and should be done once per program;
         let preprocessed_key = preprocess_prover(&self.program);
@@ -88,12 +88,12 @@ impl zkVM for EreJolt {
         let (public_inputs, proof) =
             deserialize_public_input_with_proof(proof_with_public_inputs).unwrap();
 
-        let mut outputs = InputErased::new();
+        let mut outputs = Input::new();
         assert!(public_inputs.is_empty());
         outputs.write(public_inputs);
 
         // TODO: I don't think we should require the inputs when verifying
-        let inputs = InputErased::new();
+        let inputs = Input::new();
 
         let valid = verify_generic(proof, inputs, outputs, preprocessed_verifier);
         if valid {
@@ -108,7 +108,7 @@ impl zkVM for EreJolt {
 mod tests {
     use crate::{EreJolt, JOLT_TARGET};
     use std::path::PathBuf;
-    use zkvm_interface::{Compiler, InputErased, ProverResourceType, zkVM};
+    use zkvm_interface::{Compiler, Input, ProverResourceType, zkVM};
 
     // TODO: for now, we just get one test file
     // TODO: but this should get the whole directory and compile each test
@@ -135,7 +135,7 @@ mod tests {
     fn test_execute() {
         let test_guest_path = get_compile_test_guest_program_path();
         let program = JOLT_TARGET::compile(&test_guest_path).unwrap();
-        let mut inputs = InputErased::new();
+        let mut inputs = Input::new();
         inputs.write(1 as u32);
 
         let zkvm = EreJolt::new(program, ProverResourceType::Cpu);

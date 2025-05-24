@@ -1,4 +1,4 @@
-use zkvm_interface::InputErased;
+use zkvm_interface::Input;
 
 pub fn preprocess_prover(
     program: &jolt::host::Program,
@@ -40,8 +40,8 @@ pub fn preprocess_verifier(
 pub fn verify_generic(
     proof: jolt::JoltHyperKZGProof,
     // TODO: input should be private input
-    _inputs: InputErased,
-    _outputs: InputErased,
+    _inputs: Input,
+    _outputs: Input,
     preprocessing: jolt::JoltVerifierPreprocessing<4, jolt::F, jolt::PCS, jolt::ProofTranscript>,
 ) -> bool {
     use jolt::{Jolt, RV32IJoltVM, tracer};
@@ -70,7 +70,7 @@ pub fn verify_generic(
 pub fn prove_generic(
     program: &jolt::host::Program,
     preprocessing: jolt::JoltProverPreprocessing<4, jolt::F, jolt::PCS, jolt::ProofTranscript>,
-    _inputs: &InputErased,
+    _inputs: &Input,
 ) -> (Vec<u8>, jolt::JoltHyperKZGProof) {
     use jolt::{Jolt, RV32IJoltVM};
 

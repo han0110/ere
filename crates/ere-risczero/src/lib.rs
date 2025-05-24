@@ -1,8 +1,8 @@
 use compile::compile_risczero_program;
 use risc0_zkvm::{ExecutorEnv, Receipt, default_executor, default_prover};
 use zkvm_interface::{
-    Compiler, Input, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM,
-    zkVMError,
+    Compiler, Input, InputItem, ProgramExecutionReport, ProgramProvingReport, ProverResourceType,
+    zkVM, zkVMError,
 };
 
 mod compile;
@@ -44,10 +44,18 @@ pub struct EreRisc0 {
 impl zkVM for EreRisc0 {
     fn execute(&self, inputs: &Input) -> Result<ProgramExecutionReport, zkVMError> {
         let executor = default_executor();
-        let env = ExecutorEnv::builder()
-            .write_slice(inputs.bytes())
-            .build()
-            .map_err(|err| zkVMError::Other(err.into()))?;
+        let mut env = ExecutorEnv::builder();
+        for input in inputs.iter() {
+            match input {
+                InputItem::Object(serialize) => {
+                    env.write(serialize).unwrap();
+                }
+                InputItem::Bytes(items) => {
+                    env.write_slice(&items);
+                }
+            }
+        }
+        let env = env.build().map_err(|err| zkVMError::Other(err.into()))?;
 
         let session_info = executor
             .execute(env, &self.program.elf)
@@ -60,10 +68,18 @@ impl zkVM for EreRisc0 {
 
     fn prove(&self, inputs: &Input) -> Result<(Vec<u8>, ProgramProvingReport), zkVMError> {
         let prover = default_prover();
-        let env = ExecutorEnv::builder()
-            .write_slice(inputs.bytes())
-            .build()
-            .map_err(|err| zkVMError::Other(err.into()))?;
+        let mut env = ExecutorEnv::builder();
+        for input in inputs.iter() {
+            match input {
+                InputItem::Object(serialize) => {
+                    env.write(serialize).unwrap();
+                }
+                InputItem::Bytes(items) => {
+                    env.write_slice(&items);
+                }
+            }
+        }
+        let env = env.build().map_err(|err| zkVMError::Other(err.into()))?;
 
         let now = std::time::Instant::now();
         let prove_info = prover
@@ -116,8 +132,8 @@ mod prove_tests {
         let mut input_builder = Input::new();
         let n: u32 = 42;
         let a: u16 = 42;
-        input_builder.write(&n).unwrap();
-        input_builder.write(&a).unwrap();
+        input_builder.write(n);
+        input_builder.write(a);
 
         let zkvm = EreRisc0::new(program, ProverResourceType::Cpu);
 
@@ -180,8 +196,8 @@ mod execute_tests {
         let mut input_builder = Input::new();
         let n: u32 = 42;
         let a: u16 = 42;
-        input_builder.write(&n).unwrap();
-        input_builder.write(&a).unwrap();
+        input_builder.write(n);
+        input_builder.write(a);
 
         let zkvm = EreRisc0::new(program, ProverResourceType::Cpu);
 
