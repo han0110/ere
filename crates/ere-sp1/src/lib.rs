@@ -7,7 +7,8 @@ use sp1_sdk::{
 };
 use tracing::info;
 use zkvm_interface::{
-    Compiler, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM, zkVMError,
+    Compiler, Input, InputItem, ProgramExecutionReport, ProgramProvingReport,
+    ProverResourceType, zkVM, zkVMError,
 };
 
 mod compile;
@@ -115,11 +116,14 @@ impl EreSP1 {
 impl zkVM for EreSP1 {
     fn execute(
         &self,
-        inputs: &zkvm_interface::Input,
+        inputs: &Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         let mut stdin = SP1Stdin::new();
-        for input in inputs.chunked_iter() {
-            stdin.write_slice(input);
+        for input in inputs.iter() {
+            match input {
+                InputItem::Object(serialize) => stdin.write(serialize),
+                InputItem::Bytes(items) => stdin.write_slice(items),
+            }
         }
 
         let (_, exec_report) = self.client.execute(&self.program, &stdin)?;
@@ -140,8 +144,11 @@ impl zkVM for EreSP1 {
         info!("Generating proof…");
 
         let mut stdin = SP1Stdin::new();
-        for input in inputs.chunked_iter() {
-            stdin.write_slice(input);
+        for input in inputs.iter() {
+            match input {
+                InputItem::Object(serialize) => stdin.write(serialize),
+                InputItem::Bytes(items) => stdin.write_slice(items),
+            };
         }
 
         let start = std::time::Instant::now();
@@ -197,8 +204,8 @@ mod execute_tests {
         let mut input_builder = Input::new();
         let n: u32 = 42;
         let a: u16 = 42;
-        input_builder.write(&n).unwrap();
-        input_builder.write(&a).unwrap();
+        input_builder.write(n);
+        input_builder.write(a);
 
         let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
 
@@ -257,8 +264,8 @@ mod prove_tests {
         let mut input_builder = Input::new();
         let n: u32 = 42;
         let a: u16 = 42;
-        input_builder.write(&n).unwrap();
-        input_builder.write(&a).unwrap();
+        input_builder.write(n);
+        input_builder.write(a);
 
         let zkvm = EreSP1::new(elf_bytes, ProverResourceType::Cpu);
 
