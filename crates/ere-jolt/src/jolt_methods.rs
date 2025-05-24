@@ -1,4 +1,4 @@
-use zkvm_interface::{Input, InputErased};
+use zkvm_interface::InputErased;
 
 pub fn preprocess_prover(
     program: &jolt::host::Program,

@@ -7,8 +7,8 @@ use utils::{
     serialize_public_input_with_proof,
 };
 use zkvm_interface::{
-    Compiler, Input, InputErased, ProgramExecutionReport, ProgramProvingReport, ProverResourceType,
-    zkVM, zkVMError,
+    Compiler, InputErased, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM,
+    zkVMError,
 };
 
 mod error;

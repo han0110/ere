@@ -4,7 +4,6 @@ use std::{path::Path, time::Duration};
 use thiserror::Error;
 
 mod input;
-pub use input::Input;
 pub use input::{InputErased, InputItem};
 
 #[allow(non_camel_case_types)]
