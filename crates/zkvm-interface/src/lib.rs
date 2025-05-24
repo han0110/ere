@@ -6,6 +6,9 @@ use thiserror::Error;
 mod input;
 pub use input::{Input, InputItem};
 
+mod reports;
+pub use reports::{ProgramExecutionReport, ProgramProvingReport};
+
 #[allow(non_camel_case_types)]
 /// Compiler trait for compiling programs into an opaque sequence of bytes.
 pub trait Compiler {
@@ -55,38 +58,4 @@ pub trait zkVM {
     /// TODO: We can also just have this return the public inputs, but then the user needs
     /// TODO: ensure they check it for correct #[must_use]
     fn verify(&self, proof: &[u8]) -> Result<(), zkVMError>;
-}
-
-/// ProgramExecutionReport produces information about a particular program
-/// execution.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct ProgramExecutionReport {
-    /// Total number of cycles for the entire workload execution.
-    pub total_num_cycles: u64,
-    /// Region-specific cycles, mapping region names (e.g., "setup", "compute") to their cycle counts.
-    pub region_cycles: IndexMap<String, u64>,
-}
-
-impl ProgramExecutionReport {
-    pub fn new(total_num_cycles: u64) -> Self {
-        ProgramExecutionReport {
-            total_num_cycles,
-            region_cycles: Default::default(),
-        }
-    }
-    pub fn insert_region(&mut self, region_name: String, num_cycles: u64) {
-        self.region_cycles.insert(region_name, num_cycles);
-    }
-}
-
-/// ProgramProvingReport produces information about proving a particular
-/// program's instance.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct ProgramProvingReport {
-    pub proving_time: Duration,
-}
-impl ProgramProvingReport {
-    pub fn new(proving_time: Duration) -> Self {
-        Self { proving_time }
-    }
 }
