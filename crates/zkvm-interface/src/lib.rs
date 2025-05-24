@@ -5,7 +5,7 @@ use thiserror::Error;
 
 mod input;
 pub use input::Input;
-pub use input::InputErased;
+pub use input::{InputErased, InputItem};
 
 #[allow(non_camel_case_types)]
 /// Compiler trait for compiling programs into an opaque sequence of bytes.
