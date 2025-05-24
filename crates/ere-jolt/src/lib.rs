@@ -46,27 +46,29 @@ impl EreJolt {
         program: <JOLT_TARGET as Compiler>::Program,
         _resource_type: ProverResourceType,
     ) -> Self {
-        EreJolt { program: program }
+        EreJolt { program }
     }
 }
 impl zkVM for EreJolt {
     fn execute(
         &self,
-        inputs: &zkvm_interface::Input,
+        _inputs: &Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         // TODO: check ProgramSummary
-        let summary = self
-            .program
-            .clone()
-            .trace_analyze::<jolt::F>(inputs.bytes());
-        let trace_len = summary.trace_len();
+        // TODO: FIXME
+        // let summary = self
+        //     .program
+        //     .clone()
+        //     .trace_analyze::<jolt::F>(inputs.bytes());
+        // let trace_len = summary.trace_len();
+        let trace_len = 0;
 
         Ok(ProgramExecutionReport::new(trace_len as u64))
     }
 
     fn prove(
         &self,
-        inputs: &zkvm_interface::Input,
+        inputs: &Input,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), zkVMError> {
         // TODO: make this stateful and do in setup since its expensive and should be done once per program;
         let preprocessed_key = preprocess_prover(&self.program);
@@ -88,7 +90,7 @@ impl zkVM for EreJolt {
 
         let mut outputs = Input::new();
         assert!(public_inputs.is_empty());
-        outputs.write(&public_inputs).unwrap();
+        outputs.write(public_inputs);
 
         // TODO: I don't think we should require the inputs when verifying
         let inputs = Input::new();
@@ -97,7 +99,7 @@ impl zkVM for EreJolt {
         if valid {
             Ok(())
         } else {
-            Err(JoltError::ProofVerificationFailed).map_err(zkVMError::from)
+            Err(zkVMError::from(JoltError::ProofVerificationFailed))
         }
     }
 }
@@ -134,7 +136,7 @@ mod tests {
         let test_guest_path = get_compile_test_guest_program_path();
         let program = JOLT_TARGET::compile(&test_guest_path).unwrap();
         let mut inputs = Input::new();
-        inputs.write(&(1 as u32)).unwrap();
+        inputs.write(1 as u32);
 
         let zkvm = EreJolt::new(program, ProverResourceType::Cpu);
         let _execution = zkvm.execute(&inputs).unwrap();

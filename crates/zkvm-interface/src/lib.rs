@@ -4,7 +4,7 @@ use std::{path::Path, time::Duration};
 use thiserror::Error;
 
 mod input;
-pub use input::Input;
+pub use input::{Input, InputItem};
 
 #[allow(non_camel_case_types)]
 /// Compiler trait for compiling programs into an opaque sequence of bytes.

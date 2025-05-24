@@ -12,7 +12,8 @@ use openvm_stark_sdk::config::{
 };
 use openvm_transpiler::elf::Elf;
 use zkvm_interface::{
-    Compiler, ProgramExecutionReport, ProgramProvingReport, ProverResourceType, zkVM, zkVMError,
+    Compiler, Input, InputItem, ProgramExecutionReport, ProgramProvingReport,
+    ProverResourceType, zkVM, zkVMError,
 };
 
 mod error;
@@ -58,7 +59,7 @@ impl EreOpenVM {
 impl zkVM for EreOpenVM {
     fn execute(
         &self,
-        inputs: &zkvm_interface::Input,
+        inputs: &Input,
     ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         let sdk = Sdk::new();
         let vm_cfg = SdkVmConfig::builder()
@@ -74,8 +75,11 @@ impl zkVM for EreOpenVM {
             .map_err(OpenVMError::from)?;
 
         let mut stdin = StdIn::default();
-        for input in inputs.chunked_iter() {
-            stdin.write_bytes(input);
+        for input in inputs.iter() {
+            match input {
+                InputItem::Object(serialize) => stdin.write(serialize),
+                InputItem::Bytes(items) => stdin.write_bytes(items),
+            }
         }
 
         let _outputs = sdk
@@ -88,7 +92,7 @@ impl zkVM for EreOpenVM {
 
     fn prove(
         &self,
-        inputs: &zkvm_interface::Input,
+        inputs: &Input,
     ) -> Result<(Vec<u8>, zkvm_interface::ProgramProvingReport), zkVMError> {
         // TODO: We need a stateful version in order to not spend a lot of time
         // TODO doing things like computing the pk and vk.
@@ -107,8 +111,11 @@ impl zkVM for EreOpenVM {
             .map_err(OpenVMError::from)?;
 
         let mut stdin = StdIn::default();
-        for input in inputs.chunked_iter() {
-            stdin.write_bytes(input);
+        for input in inputs.iter() {
+            match input {
+                InputItem::Object(serialize) => stdin.write(serialize),
+                InputItem::Bytes(items) => stdin.write_bytes(items),
+            }
         }
 
         let app_config = AppConfig::new(FriParameters::standard_fast(), vm_cfg);
@@ -193,7 +200,7 @@ mod tests {
         // Panics because the program expects input arguments, but we supply none
         let test_guest_path = get_compile_test_guest_program_path();
         let elf = OPENVM_TARGET::compile(&test_guest_path).expect("compilation failed");
-        let empty_input = zkvm_interface::Input::new();
+        let empty_input = Input::new();
         let zkvm = EreOpenVM::new(elf, ProverResourceType::Cpu);
 
         zkvm.execute(&empty_input).unwrap();
@@ -203,8 +210,8 @@ mod tests {
     fn test_execute() {
         let test_guest_path = get_compile_test_guest_program_path();
         let elf = OPENVM_TARGET::compile(&test_guest_path).expect("compilation failed");
-        let mut input = zkvm_interface::Input::new();
-        input.write(&10u64).unwrap();
+        let mut input = Input::new();
+        input.write(10u64);
 
         let zkvm = EreOpenVM::new(elf, ProverResourceType::Cpu);
         zkvm.execute(&input).unwrap();
@@ -214,8 +221,8 @@ mod tests {
     fn test_prove_verify() {
         let test_guest_path = get_compile_test_guest_program_path();
         let elf = OPENVM_TARGET::compile(&test_guest_path).expect("compilation failed");
-        let mut input = zkvm_interface::Input::new();
-        input.write(&10u64).unwrap();
+        let mut input = Input::new();
+        input.write(10u64);
 
         let zkvm = EreOpenVM::new(elf, ProverResourceType::Cpu);
         let (proof, _) = zkvm.prove(&input).unwrap();
