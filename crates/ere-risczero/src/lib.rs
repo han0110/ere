@@ -29,6 +29,17 @@ impl EreRisc0 {
         program: <RV32_IM_RISCZERO_ZKVM_ELF as Compiler>::Program,
         resource_type: ProverResourceType,
     ) -> Self {
+        match resource_type {
+            ProverResourceType::Cpu => {
+                #[cfg(any(feature = "cuda", feature = "metal"))]
+                panic!("CPU mode requires both 'cuda' and 'metal' features to be disabled");
+            }
+            ProverResourceType::Gpu => {
+                #[cfg(not(any(feature = "cuda", feature = "metal")))]
+                panic!("GPU selected but neither 'cuda' nor 'metal' feature is enabled");
+            }
+        }
+
         Self {
             program,
             resource_type,
