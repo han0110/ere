@@ -1,15 +1,15 @@
 use erased_serde::Serialize as ErasedSerialize;
 use serde::Serialize;
-/// Represents a builder for input data to be passed to a ZKVM guest program.
-/// Values are serialized sequentially into an internal byte buffer.
-#[derive(Debug, Default)]
-pub struct Input {
-    buf: Vec<u8>,
-    ranges: Vec<(usize, usize)>,
+
+pub enum InputItem {
+    /// A serializable object stored as a trait object
+    Object(Box<dyn ErasedSerialize>),
+    /// Pre-serialized bytes (e.g., from bincode)
+    Bytes(Vec<u8>),
 }
 
 pub struct InputErased {
-    buf: Vec<Box<dyn ErasedSerialize>>,
+    buf: Vec<InputItem>,
 }
 
 impl InputErased {
@@ -20,10 +20,69 @@ impl InputErased {
         }
     }
 
-    pub fn write<T: Serialize + 'static>(&mut self, value: T) -> Result<(), bincode::Error> {
-        self.buf.push(Box::new(value));
-        Ok(())
+    /// Write a serializable value as a trait object
+    pub fn write<T: Serialize + 'static>(&mut self, value: T) {
+        self.buf.push(InputItem::Object(Box::new(value)));
     }
+
+    /// Write pre-serialized bytes directly
+    pub fn write_bytes(&mut self, bytes: Vec<u8>) {
+        self.buf.push(InputItem::Bytes(bytes));
+    }
+
+    /// Get the number of items stored
+    pub fn len(&self) -> usize {
+        self.buf.len()
+    }
+
+    /// Check if the buffer is empty
+    pub fn is_empty(&self) -> bool {
+        self.buf.is_empty()
+    }
+
+    /// Iterate over the items
+    pub fn iter(&self) -> std::slice::Iter<InputItem> {
+        self.buf.iter()
+    }
+}
+
+// Optional: Implement methods to work with the enum
+impl InputItem {
+    /// Serialize this item to bytes using the specified serializer
+    pub fn serialize_with<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            InputItem::Object(obj) => erased_serde::serialize(obj.as_ref(), serializer),
+            InputItem::Bytes(bytes) => {
+                // Serialize the bytes as a byte array
+                bytes.serialize(serializer)
+            }
+        }
+    }
+
+    /// Get the item as bytes (serialize objects, return bytes directly)
+    pub fn as_bytes(&self) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        match self {
+            InputItem::Object(obj) => {
+                let mut buf = Vec::new();
+                let mut serializer =
+                    bincode::Serializer::new(&mut buf, bincode::DefaultOptions::new());
+                erased_serde::serialize(obj.as_ref(), &mut serializer)?;
+                Ok(buf)
+            }
+            InputItem::Bytes(bytes) => Ok(bytes.clone()),
+        }
+    }
+}
+
+/// Represents a builder for input data to be passed to a ZKVM guest program.
+/// Values are serialized sequentially into an internal byte buffer.
+#[derive(Debug, Default)]
+pub struct Input {
+    buf: Vec<u8>,
+    ranges: Vec<(usize, usize)>,
 }
 
 impl Input {
@@ -157,33 +216,8 @@ mod input_erased_tests {
         age: u32,
     }
 
-    #[derive(Debug, Serialize, Deserialize, PartialEq)]
-    struct Product {
-        id: u64,
-        name: String,
-        price: f64,
-    }
-
     #[test]
-    fn test_new_creates_empty_buffer() {
-        let input = InputErased::new();
-        assert_eq!(input.buf.len(), 0);
-    }
-
-    #[test]
-    fn test_write_primitive_types() {
-        let mut input = InputErased::new();
-
-        assert!(input.write(42i32).is_ok());
-        assert!(input.write(3.14f64).is_ok());
-        assert!(input.write(true).is_ok());
-        assert!(input.write("hello".to_string()).is_ok());
-
-        assert_eq!(input.buf.len(), 4);
-    }
-
-    #[test]
-    fn test_write_custom_structs() {
+    fn test_write_object() {
         let mut input = InputErased::new();
 
         let person = Person {
@@ -191,131 +225,118 @@ mod input_erased_tests {
             age: 30,
         };
 
-        let product = Product {
-            id: 123,
-            name: "Widget".to_string(),
-            price: 9.99,
+        input.write(person);
+        assert_eq!(input.len(), 1);
+
+        match &input.buf[0] {
+            InputItem::Object(_) => (), // Success
+            InputItem::Bytes(_) => panic!("Expected Object, got Bytes"),
+        }
+    }
+
+    #[test]
+    fn test_write_bytes() {
+        let mut input = InputErased::new();
+
+        let bytes = vec![1, 2, 3, 4, 5];
+        input.write_bytes(bytes.clone());
+
+        assert_eq!(input.len(), 1);
+
+        match &input.buf[0] {
+            InputItem::Bytes(stored_bytes) => assert_eq!(stored_bytes, &bytes),
+            InputItem::Object(_) => panic!("Expected Bytes, got Object"),
+        }
+    }
+
+    #[test]
+    fn test_write_serialized() {
+        let mut input = InputErased::new();
+
+        let person = Person {
+            name: "Bob".to_string(),
+            age: 25,
         };
 
-        assert!(input.write(person).is_ok());
-        assert!(input.write(product).is_ok());
+        // User serializes themselves and writes bytes
+        let serialized = bincode::serialize(&person).unwrap();
+        input.write_bytes(serialized);
 
-        assert_eq!(input.buf.len(), 2);
-    }
+        assert_eq!(input.len(), 1);
 
-    #[test]
-    fn test_write_collections() {
-        let mut input = InputErased::new();
-
-        let vec_data = vec![1, 2, 3, 4, 5];
-        let array_data = [10, 20, 30];
-
-        assert!(input.write(vec_data).is_ok());
-        assert!(input.write(array_data).is_ok());
-
-        assert_eq!(input.buf.len(), 2);
-    }
-
-    #[test]
-    fn test_write_mixed_types() {
-        let mut input = InputErased::new();
-
-        // Write different types to the same buffer
-        assert!(input.write(42).is_ok());
-        assert!(input.write("test".to_string()).is_ok());
-        assert!(input.write(vec![1, 2, 3]).is_ok());
-        assert!(
-            input
-                .write(Person {
-                    name: "Bob".to_string(),
-                    age: 25,
-                })
-                .is_ok()
-        );
-
-        assert_eq!(input.buf.len(), 4);
-    }
-
-    #[test]
-    fn test_serialization_with_erased_serde() {
-        let mut input = InputErased::new();
-
-        input.write(42i32).unwrap();
-        input.write("hello".to_string()).unwrap();
-
-        // Test that we can serialize the stored items to a buffer
-        for item in &input.buf {
-            let mut buf = Vec::new();
-            let mut serializer = serde_json::Serializer::new(&mut buf);
-            let json_result = erased_serde::serialize(item.as_ref(), &mut serializer);
-            // Just testing that serialization works without error
-            assert!(json_result.is_ok());
+        match &input.buf[0] {
+            InputItem::Bytes(_) => (), // Success
+            InputItem::Object(_) => panic!("Expected Bytes, got Object"),
         }
     }
 
     #[test]
-    fn test_write_returns_ok() {
+    fn test_mixed_usage() {
         let mut input = InputErased::new();
 
-        // All these should return Ok(())
-        let results = vec![
-            input.write(1),
-            input.write("test".to_string()),
-            input.write(vec![1, 2, 3]),
-        ];
+        let person = Person {
+            name: "Charlie".to_string(),
+            age: 35,
+        };
 
-        for result in results {
-            assert!(result.is_ok());
-            assert_eq!(result.unwrap(), ());
+        // Mix different write methods
+        input.write(42i32); // Object
+        let serialized = bincode::serialize(&person).unwrap();
+        input.write_bytes(serialized); // Bytes (serialized)
+        input.write_bytes(vec![10, 20, 30]); // Bytes (raw)
+        input.write("hello".to_string()); // Object
+
+        assert_eq!(input.len(), 4);
+
+        // Verify types
+        match &input.buf[0] {
+            InputItem::Object(_) => (),
+            _ => panic!(),
+        }
+        match &input.buf[1] {
+            InputItem::Bytes(_) => (),
+            _ => panic!(),
+        }
+        match &input.buf[2] {
+            InputItem::Bytes(_) => (),
+            _ => panic!(),
+        }
+        match &input.buf[3] {
+            InputItem::Object(_) => (),
+            _ => panic!(),
         }
     }
 
     #[test]
-    fn test_multiple_writes_increase_buffer_size() {
+    fn test_as_bytes() {
         let mut input = InputErased::new();
 
-        assert_eq!(input.buf.len(), 0);
+        // Add an object
+        input.write(42i32);
 
-        input.write(1).unwrap();
-        assert_eq!(input.buf.len(), 1);
+        // Add raw bytes
+        input.write_bytes(vec![1, 2, 3]);
 
-        input.write(2).unwrap();
-        assert_eq!(input.buf.len(), 2);
+        // Convert both to bytes
+        let obj_bytes = input.buf[0].as_bytes().unwrap();
+        let raw_bytes = input.buf[1].as_bytes().unwrap();
 
-        input.write(3).unwrap();
-        assert_eq!(input.buf.len(), 3);
-    }
+        // The object should be serialized to some bytes
+        assert!(!obj_bytes.is_empty());
 
-    // Helper function to demonstrate actual serialization to bytes
-    // (since the current implementation doesn't expose this)
-    fn serialize_buffer_to_json(
-        input: &InputErased,
-    ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-        let mut results = Vec::new();
-
-        for item in &input.buf {
-            let mut buf = Vec::new();
-            let mut serializer = serde_json::Serializer::new(&mut buf);
-            erased_serde::serialize(item.as_ref(), &mut serializer)?;
-            results.push(String::from_utf8(buf)?);
-        }
-
-        Ok(results)
+        // The raw bytes should be returned as-is
+        assert_eq!(raw_bytes, vec![1, 2, 3]);
     }
 
     #[test]
-    fn test_actual_serialization_output() {
+    fn test_iteration() {
         let mut input = InputErased::new();
 
-        input.write(42).unwrap();
-        input.write("hello".to_string()).unwrap();
-        input.write(vec![1, 2, 3]).unwrap();
+        input.write(1);
+        input.write(2);
+        input.write_bytes(vec![3, 4, 5]);
 
-        let serialized = serialize_buffer_to_json(&input).unwrap();
-
-        assert_eq!(serialized.len(), 3);
-        assert_eq!(serialized[0], "42");
-        assert_eq!(serialized[1], "\"hello\"");
-        assert_eq!(serialized[2], "[1,2,3]");
+        let count = input.iter().count();
+        assert_eq!(count, 3);
     }
 }
