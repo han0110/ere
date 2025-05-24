@@ -46,13 +46,13 @@ impl EreJolt {
         program: <JOLT_TARGET as Compiler>::Program,
         _resource_type: ProverResourceType,
     ) -> Self {
-        EreJolt { program: program }
+        EreJolt { program }
     }
 }
 impl zkVM for EreJolt {
     fn execute(
         &self,
-        inputs: &InputErased,
+        _inputs: &InputErased,
     ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         // TODO: check ProgramSummary
         // TODO: FIXME
@@ -99,7 +99,7 @@ impl zkVM for EreJolt {
         if valid {
             Ok(())
         } else {
-            Err(JoltError::ProofVerificationFailed).map_err(zkVMError::from)
+            Err(zkVMError::from(JoltError::ProofVerificationFailed))
         }
     }
 }
@@ -108,7 +108,7 @@ impl zkVM for EreJolt {
 mod tests {
     use crate::{EreJolt, JOLT_TARGET};
     use std::path::PathBuf;
-    use zkvm_interface::{Compiler, Input, InputErased, ProverResourceType, zkVM};
+    use zkvm_interface::{Compiler, InputErased, ProverResourceType, zkVM};
 
     // TODO: for now, we just get one test file
     // TODO: but this should get the whole directory and compile each test

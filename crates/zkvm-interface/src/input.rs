@@ -10,40 +10,45 @@ pub enum InputItem {
 
 /// Represents a builder for input data to be passed to a ZKVM guest program.
 pub struct InputErased {
-    buf: Vec<InputItem>,
+    items: Vec<InputItem>,
+}
+impl Default for InputErased {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl InputErased {
     /// Create an empty input buffer.
     pub fn new() -> Self {
         Self {
-            buf: Default::default(),
+            items: Default::default(),
         }
     }
 
     /// Write a serializable value as a trait object
     pub fn write<T: Serialize + 'static>(&mut self, value: T) {
-        self.buf.push(InputItem::Object(Box::new(value)));
+        self.items.push(InputItem::Object(Box::new(value)));
     }
 
     /// Write pre-serialized bytes directly
     pub fn write_bytes(&mut self, bytes: Vec<u8>) {
-        self.buf.push(InputItem::Bytes(bytes));
+        self.items.push(InputItem::Bytes(bytes));
     }
 
     /// Get the number of items stored
     pub fn len(&self) -> usize {
-        self.buf.len()
+        self.items.len()
     }
 
     /// Check if the buffer is empty
     pub fn is_empty(&self) -> bool {
-        self.buf.is_empty()
+        self.items.is_empty()
     }
 
     /// Iterate over the items
     pub fn iter(&self) -> std::slice::Iter<InputItem> {
-        self.buf.iter()
+        self.items.iter()
     }
 }
 
@@ -101,7 +106,7 @@ mod input_erased_tests {
         input.write(person);
         assert_eq!(input.len(), 1);
 
-        match &input.buf[0] {
+        match &input.items[0] {
             InputItem::Object(_) => (), // Success
             InputItem::Bytes(_) => panic!("Expected Object, got Bytes"),
         }
@@ -116,7 +121,7 @@ mod input_erased_tests {
 
         assert_eq!(input.len(), 1);
 
-        match &input.buf[0] {
+        match &input.items[0] {
             InputItem::Bytes(stored_bytes) => assert_eq!(stored_bytes, &bytes),
             InputItem::Object(_) => panic!("Expected Bytes, got Object"),
         }
@@ -137,7 +142,7 @@ mod input_erased_tests {
 
         assert_eq!(input.len(), 1);
 
-        match &input.buf[0] {
+        match &input.items[0] {
             InputItem::Bytes(_) => (), // Success
             InputItem::Object(_) => panic!("Expected Bytes, got Object"),
         }
@@ -162,19 +167,19 @@ mod input_erased_tests {
         assert_eq!(input.len(), 4);
 
         // Verify types
-        match &input.buf[0] {
+        match &input.items[0] {
             InputItem::Object(_) => (),
             _ => panic!(),
         }
-        match &input.buf[1] {
+        match &input.items[1] {
             InputItem::Bytes(_) => (),
             _ => panic!(),
         }
-        match &input.buf[2] {
+        match &input.items[2] {
             InputItem::Bytes(_) => (),
             _ => panic!(),
         }
-        match &input.buf[3] {
+        match &input.items[3] {
             InputItem::Object(_) => (),
             _ => panic!(),
         }
@@ -191,8 +196,8 @@ mod input_erased_tests {
         input.write_bytes(vec![1, 2, 3]);
 
         // Convert both to bytes
-        let obj_bytes = input.buf[0].as_bytes().unwrap();
-        let raw_bytes = input.buf[1].as_bytes().unwrap();
+        let obj_bytes = input.items[0].as_bytes().unwrap();
+        let raw_bytes = input.items[1].as_bytes().unwrap();
 
         // The object should be serialized to some bytes
         assert!(!obj_bytes.is_empty());

@@ -40,15 +40,15 @@ pub fn preprocess_verifier(
 pub fn verify_generic(
     proof: jolt::JoltHyperKZGProof,
     // TODO: input should be private input
-    inputs: InputErased,
-    outputs: InputErased,
+    _inputs: InputErased,
+    _outputs: InputErased,
     preprocessing: jolt::JoltVerifierPreprocessing<4, jolt::F, jolt::PCS, jolt::ProofTranscript>,
 ) -> bool {
     use jolt::{Jolt, RV32IJoltVM, tracer};
 
     let preprocessing = std::sync::Arc::new(preprocessing);
     let preprocessing = (*preprocessing).clone();
-    let mut io_device = tracer::JoltDevice::new(
+    let io_device = tracer::JoltDevice::new(
         preprocessing.memory_layout.max_input_size,
         preprocessing.memory_layout.max_output_size,
     );
@@ -70,7 +70,7 @@ pub fn verify_generic(
 pub fn prove_generic(
     program: &jolt::host::Program,
     preprocessing: jolt::JoltProverPreprocessing<4, jolt::F, jolt::PCS, jolt::ProofTranscript>,
-    inputs: &InputErased,
+    _inputs: &InputErased,
 ) -> (Vec<u8>, jolt::JoltHyperKZGProof) {
     use jolt::{Jolt, RV32IJoltVM};
 
