@@ -1,3 +1,7 @@
+use indexmap::IndexMap;
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
+
 /// ProgramExecutionReport produces information about a particular program
 /// execution.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
