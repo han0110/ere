@@ -63,7 +63,7 @@ impl zkVM for EreRisc0 {
                     env.write(serialize).unwrap();
                 }
                 InputItem::Bytes(items) => {
-                    env.write_slice(&items);
+                    env.write_frame(items);
                 }
             }
         }
@@ -87,7 +87,7 @@ impl zkVM for EreRisc0 {
                     env.write(serialize).unwrap();
                 }
                 InputItem::Bytes(items) => {
-                    env.write_slice(&items);
+                    env.write_frame(&items);
                 }
             }
         }
