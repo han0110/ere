@@ -39,6 +39,7 @@ pub(crate) fn compile_risczero_program(path: &Path) -> Result<Risc0Program, Comp
     let output = Command::new("cargo")
         .current_dir(path)
         .arg("build")
+        .arg("--release")
         .output()
         .map_err(|e| CompileError::io(e, "spawning cargo build"))?;
 
