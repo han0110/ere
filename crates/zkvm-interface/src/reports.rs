@@ -10,13 +10,15 @@ pub struct ProgramExecutionReport {
     pub total_num_cycles: u64,
     /// Region-specific cycles, mapping region names (e.g., "setup", "compute") to their cycle counts.
     pub region_cycles: IndexMap<String, u64>,
+    /// Execution duration.
+    pub execution_duration: Duration,
 }
 
 impl ProgramExecutionReport {
     pub fn new(total_num_cycles: u64) -> Self {
         ProgramExecutionReport {
             total_num_cycles,
-            region_cycles: Default::default(),
+            ..Default::default()
         }
     }
     pub fn insert_region(&mut self, region_name: String, num_cycles: u64) {

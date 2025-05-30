@@ -1,5 +1,5 @@
 use pico_sdk::client::DefaultProverClient;
-use std::process::Command;
+use std::{process::Command, time::Instant};
 use zkvm_interface::{
     Compiler, Input, InputItem, ProgramExecutionReport, ProgramProvingReport, ProverResourceType,
     zkVM, zkVMError,
@@ -75,9 +75,15 @@ impl zkVM for ErePico {
                 InputItem::Bytes(items) => stdin.write_slice(items),
             }
         }
+
+        let start = Instant::now();
         let num_cycles = client.emulate(stdin);
 
-        Ok(ProgramExecutionReport::new(num_cycles))
+        Ok(ProgramExecutionReport {
+            total_num_cycles: num_cycles,
+            execution_duration: start.elapsed(),
+            ..Default::default()
+        })
     }
 
     fn prove(

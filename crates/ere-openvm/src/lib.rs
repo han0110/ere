@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use openvm_build::GuestOptions;
 use openvm_circuit::arch::ContinuationVmProof;
 use openvm_sdk::{
@@ -12,8 +14,8 @@ use openvm_stark_sdk::config::{
 };
 use openvm_transpiler::elf::Elf;
 use zkvm_interface::{
-    Compiler, Input, InputItem, ProgramExecutionReport, ProgramProvingReport,
-    ProverResourceType, zkVM, zkVMError,
+    Compiler, Input, InputItem, ProgramExecutionReport, ProgramProvingReport, ProverResourceType,
+    zkVM, zkVMError,
 };
 
 mod error;
@@ -57,10 +59,7 @@ impl EreOpenVM {
     }
 }
 impl zkVM for EreOpenVM {
-    fn execute(
-        &self,
-        inputs: &Input,
-    ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
+    fn execute(&self, inputs: &Input) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         let sdk = Sdk::new();
         let vm_cfg = SdkVmConfig::builder()
             .system(Default::default())
@@ -82,12 +81,16 @@ impl zkVM for EreOpenVM {
             }
         }
 
+        let start = Instant::now();
         let _outputs = sdk
             .execute(exe.clone(), vm_cfg.clone(), stdin)
             .map_err(|e| CompileError::Client(e.into()))
             .map_err(OpenVMError::from)?;
 
-        Ok(ProgramExecutionReport::default())
+        Ok(ProgramExecutionReport {
+            execution_duration: start.elapsed(),
+            ..Default::default()
+        })
     }
 
     fn prove(
