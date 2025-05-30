@@ -8,7 +8,7 @@ use std::{
     io::Write,
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    time,
+    time::{self, Instant},
 };
 use tempfile::tempdir;
 use zkvm_interface::{
@@ -88,6 +88,7 @@ impl zkVM for EreZisk {
             .into());
         }
 
+        let start = Instant::now();
         let total_num_cycles = String::from_utf8_lossy(&output.stdout)
             .split_once("total steps = ")
             .and_then(|(_, stats)| {
@@ -98,7 +99,11 @@ impl zkVM for EreZisk {
             })
             .ok_or(ZiskError::Execute(ExecuteError::TotalStepsNotFound))?;
 
-        Ok(ProgramExecutionReport::new(total_num_cycles))
+        Ok(ProgramExecutionReport {
+            total_num_cycles,
+            execution_duration: start.elapsed(),
+            ..Default::default()
+        })
     }
 
     fn prove(&self, input: &Input) -> Result<(Vec<u8>, ProgramProvingReport), zkVMError> {

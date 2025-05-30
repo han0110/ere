@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use compile::compile_risczero_program;
 use risc0_zkvm::{ExecutorEnv, Receipt, default_executor, default_prover};
 use zkvm_interface::{
@@ -69,12 +71,14 @@ impl zkVM for EreRisc0 {
         }
         let env = env.build().map_err(|err| zkVMError::Other(err.into()))?;
 
+        let start = Instant::now();
         let session_info = executor
             .execute(env, &self.program.elf)
             .map_err(|err| zkVMError::Other(err.into()))?;
         Ok(ProgramExecutionReport {
             total_num_cycles: session_info.cycles() as u64,
-            region_cycles: Default::default(),
+            execution_duration: start.elapsed(),
+            ..Default::default()
         })
     }
 

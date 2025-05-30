@@ -1,5 +1,7 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
+use std::time::Instant;
+
 use compile::compile_sp1_program;
 use sp1_sdk::{
     CpuProver, CudaProver, Prover, ProverClient, SP1ProofWithPublicValues, SP1ProvingKey, SP1Stdin,
@@ -7,8 +9,8 @@ use sp1_sdk::{
 };
 use tracing::info;
 use zkvm_interface::{
-    Compiler, Input, InputItem, ProgramExecutionReport, ProgramProvingReport,
-    ProverResourceType, zkVM, zkVMError,
+    Compiler, Input, InputItem, ProgramExecutionReport, ProgramProvingReport, ProverResourceType,
+    zkVM, zkVMError,
 };
 
 mod compile;
@@ -114,10 +116,7 @@ impl EreSP1 {
 }
 
 impl zkVM for EreSP1 {
-    fn execute(
-        &self,
-        inputs: &Input,
-    ) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
+    fn execute(&self, inputs: &Input) -> Result<zkvm_interface::ProgramExecutionReport, zkVMError> {
         let mut stdin = SP1Stdin::new();
         for input in inputs.iter() {
             match input {
@@ -126,15 +125,13 @@ impl zkVM for EreSP1 {
             }
         }
 
+        let start = Instant::now();
         let (_, exec_report) = self.client.execute(&self.program, &stdin)?;
-        let total_num_cycles = exec_report.total_instruction_count();
-        let region_cycles: indexmap::IndexMap<_, _> =
-            exec_report.cycle_tracker.into_iter().collect();
-
-        let mut ere_report = ProgramExecutionReport::new(total_num_cycles);
-        ere_report.region_cycles = region_cycles;
-
-        Ok(ere_report)
+        Ok(ProgramExecutionReport {
+            total_num_cycles: exec_report.total_instruction_count(),
+            region_cycles: exec_report.cycle_tracker.into_iter().collect(),
+            execution_duration: start.elapsed(),
+        })
     }
 
     fn prove(
