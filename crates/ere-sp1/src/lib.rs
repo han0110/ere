@@ -168,8 +168,8 @@ impl zkVM for EreSP1 {
             }
         }
 
-        let start = Instant::now();
         let client = Self::create_client(&self.resource);
+        let start = Instant::now();
         let (_, exec_report) = client.execute(&self.program, &stdin)?;
         Ok(ProgramExecutionReport {
             total_num_cycles: exec_report.total_instruction_count(),
