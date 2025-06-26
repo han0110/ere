@@ -88,8 +88,16 @@ pub struct EreSP1 {
     pk: SP1ProvingKey,
     /// Verification key
     vk: SP1VerifyingKey,
-    /// Proof and Verification orchestrator
-    client: ProverType,
+    /// Prover resource configuration for creating clients
+    resource: ProverResourceType,
+    // FIXME: The current version of SP1 (v5.0.5) has a problem where if proving the program crashes in the
+    // Moongate container, it leaves an internal mutex poisoned, which prevents further proving attempts.
+    // This is a workaround to avoid the poisoned mutex issue by creating a new client for each prove call.
+    // We still use the `setup(...)` method to create the proving and verification keys only once, such that when
+    // later calling `prove(...)` in a fresh client, we can reuse the keys and avoiding extra work.
+    //
+    // Eventually, this should be fixed in the SP1 SDK and we can create the `client` in the `new(...)` method.
+    // For more context see: https://github.com/eth-act/zkevm-benchmark-workload/issues/54
 }
 
 impl Compiler for RV32_IM_SUCCINCT_ZKVM_ELF {
@@ -125,24 +133,27 @@ impl EreSP1 {
         builder.build()
     }
 
+    fn create_client(resource: &ProverResourceType) -> ProverType {
+        match resource {
+            ProverResourceType::Cpu => ProverType::Cpu(ProverClient::builder().cpu().build()),
+            ProverResourceType::Gpu => ProverType::Gpu(ProverClient::builder().cuda().build()),
+            ProverResourceType::Network(config) => {
+                ProverType::Network(Self::create_network_prover(config))
+            }
+        }
+    }
+
     pub fn new(
         program: <RV32_IM_SUCCINCT_ZKVM_ELF as Compiler>::Program,
         resource: ProverResourceType,
     ) -> Self {
-        let client = match resource {
-            ProverResourceType::Cpu => ProverType::Cpu(ProverClient::builder().cpu().build()),
-            ProverResourceType::Gpu => ProverType::Gpu(ProverClient::builder().cuda().build()),
-            ProverResourceType::Network(config) => {
-                ProverType::Network(Self::create_network_prover(&config))
-            }
-        };
-        let (pk, vk) = client.setup(&program);
+        let (pk, vk) = Self::create_client(&resource).setup(&program);
 
         Self {
             program,
-            client,
             pk,
             vk,
+            resource,
         }
     }
 }
@@ -157,8 +168,9 @@ impl zkVM for EreSP1 {
             }
         }
 
+        let client = Self::create_client(&self.resource);
         let start = Instant::now();
-        let (_, exec_report) = self.client.execute(&self.program, &stdin)?;
+        let (_, exec_report) = client.execute(&self.program, &stdin)?;
         Ok(ProgramExecutionReport {
             total_num_cycles: exec_report.total_instruction_count(),
             region_cycles: exec_report.cycle_tracker.into_iter().collect(),
@@ -180,8 +192,9 @@ impl zkVM for EreSP1 {
             };
         }
 
+        let client = Self::create_client(&self.resource);
         let start = std::time::Instant::now();
-        let proof_with_inputs = self.client.prove(&self.pk, &stdin)?;
+        let proof_with_inputs = client.prove(&self.pk, &stdin)?;
         let proving_time = start.elapsed();
 
         let bytes = bincode::serialize(&proof_with_inputs)
@@ -196,9 +209,8 @@ impl zkVM for EreSP1 {
         let proof: SP1ProofWithPublicValues = bincode::deserialize(proof)
             .map_err(|err| SP1Error::Verify(VerifyError::Bincode(err)))?;
 
-        self.client
-            .verify(&proof, &self.vk)
-            .map_err(zkVMError::from)
+        let client = Self::create_client(&self.resource);
+        client.verify(&proof, &self.vk).map_err(zkVMError::from)
     }
 }
 
