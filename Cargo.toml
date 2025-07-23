@@ -1,15 +1,16 @@
 [workspace]
 members = [
     "crates/build-utils",
-    # zkVM interface
-    "crates/zkvm-interface",
     # zkVMs
-    "crates/ere-sp1",
-    "crates/ere-risczero",
+    "crates/ere-jolt",
+    "crates/ere-nexus",
     "crates/ere-openvm",
     "crates/ere-pico",
-    "crates/ere-jolt",
+    "crates/ere-risczero",
+    "crates/ere-sp1",
     "crates/ere-zisk",
+    # zkVM interface
+    "crates/zkvm-interface",
 
     # Guest compilers
     "docker/sp1",
