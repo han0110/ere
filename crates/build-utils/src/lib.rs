@@ -41,3 +41,11 @@ pub fn gen_name_and_sdk_version(name: &str, version: &str) {
     .unwrap();
     println!("cargo:rerun-if-changed=Cargo.lock");
 }
+
+pub fn detect_ere_version() -> String {
+    let meta = MetadataCommand::new()
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .exec()
+        .unwrap();
+    meta.root_package().unwrap().version.to_string()
+}

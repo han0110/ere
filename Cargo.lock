@@ -2342,6 +2342,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "ere-cli"
+version = "0.0.10"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "clap",
+ "ere-jolt",
+ "ere-nexus",
+ "ere-openvm",
+ "ere-pico",
+ "ere-risc0",
+ "ere-sp1",
+ "ere-zisk",
+ "zkvm-interface",
+]
+
+[[package]]
+name = "ere-dockerized"
+version = "0.0.10"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "build-utils",
+ "bytemuck",
+ "cargo_metadata 0.19.2",
+ "clap",
+ "risc0-zkvm",
+ "serde",
+ "tempfile",
+ "toml 0.8.22",
+ "tracing",
+ "zkvm-interface",
+]
+
+[[package]]
 name = "ere-jolt"
 version = "0.0.10"
 dependencies = [
