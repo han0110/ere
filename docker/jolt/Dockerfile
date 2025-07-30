@@ -17,4 +17,4 @@ RUN /tmp/install_jolt_sdk.sh && rm /tmp/install_jolt_sdk.sh # Clean up the scrip
 # Verify jolt CLI is accessible.
 RUN jolt --version
 
-CMD ["/bin/bash"] 
+CMD ["/bin/bash"]

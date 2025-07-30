@@ -1123,7 +1123,7 @@ dependencies = [
 
 [[package]]
 name = "build-utils"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "cargo_metadata 0.20.0",
  "thiserror 2.0.12",
@@ -2343,7 +2343,7 @@ dependencies = [
 
 [[package]]
 name = "ere-jolt"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "ark-serialize 0.5.0",
  "build-utils",
@@ -2359,7 +2359,7 @@ dependencies = [
 
 [[package]]
 name = "ere-nexus"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "anyhow",
  "bincode",
@@ -2373,7 +2373,7 @@ dependencies = [
 
 [[package]]
 name = "ere-openvm"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "build-utils",
  "openvm-build",
@@ -2389,7 +2389,7 @@ dependencies = [
 
 [[package]]
 name = "ere-pico"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "bincode",
  "build-utils",
@@ -2400,44 +2400,47 @@ dependencies = [
 
 [[package]]
 name = "ere-risc0"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "anyhow",
  "bincode",
  "borsh",
  "build-utils",
  "bytemuck",
+ "cargo_metadata 0.19.2",
  "hex",
+ "risc0-build",
  "risc0-zkvm",
  "serde",
  "serde_json",
  "tempfile",
  "thiserror 2.0.12",
+ "toml 0.8.22",
  "tracing",
  "zkvm-interface",
 ]
 
 [[package]]
 name = "ere-sp1"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "bincode",
  "build-utils",
  "sp1-sdk",
  "tempfile",
  "thiserror 2.0.12",
+ "toml 0.8.22",
  "tracing",
  "zkvm-interface",
 ]
 
 [[package]]
 name = "ere-zisk"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "bincode",
  "blake3",
  "build-utils",
- "lib-c",
  "serde",
  "tempfile",
  "thiserror 2.0.12",
@@ -3894,11 +3897,6 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 dependencies = [
  "spin",
 ]
-
-[[package]]
-name = "lib-c"
-version = "0.9.0"
-source = "git+https://github.com/0xPolygonHermez/zisk.git?tag=v0.9.0#efbcdd4dddb39cf410d496358d01ee133a484780"
 
 [[package]]
 name = "libc"
@@ -7875,22 +7873,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "risc0-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bincode",
- "borsh",
- "clap",
- "hex",
- "risc0-zkvm",
- "tempfile",
- "toml 0.8.22",
- "tracing",
- "zkvm-interface",
-]
-
-[[package]]
 name = "risc0-core"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8947,17 +8929,6 @@ checksum = "5efc1439094c4dc86e35e2ded63ef2b56b2717671adc0582373e9a7ac76c8b34"
 dependencies = [
  "quote",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "sp1-guest-compiler"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "tempfile",
- "toml 0.8.22",
- "tracing",
 ]
 
 [[package]]
@@ -11124,7 +11095,7 @@ dependencies = [
 
 [[package]]
 name = "zkvm-interface"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "anyhow",
  "auto_impl",

@@ -20,21 +20,10 @@ RUN /tmp/install_nexus_sdk.sh && rm /tmp/install_nexus_sdk.sh # Clean up the scr
 # Define the Nexus toolchain for convenience in subsequent commands if needed, though cargo-nexus should use it.
 ENV NEXUS_TOOLCHAIN_VERSION="nightly-2025-06-05"
 
+# Set default toolchain
+RUN rustup default "$NEXUS_TOOLCHAIN_VERSION"
+
 # Verify Nexus installation
 RUN echo "Verifying Nexus installation in Dockerfile (post-script)..." && cargo-nexus --version
-
-# Copy the entire ere project context
-# The WORKDIR is /app from the base image
-WORKDIR /app
-COPY . .
-
-# Build
-RUN echo "Build tests for ere-nexus library..." && \
-    cargo build --tests --release -p ere-nexus
-
-# Run tests
-RUN echo "Running tests for ere-nexus library..." && \
-    cargo test --release -p ere-nexus --lib -- --color always && \
-    echo "Running Nexus tests Success..."
 
 CMD ["/bin/bash"]

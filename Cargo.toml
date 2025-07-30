@@ -11,15 +11,11 @@ members = [
     "crates/ere-zisk",
     # zkVM interface
     "crates/zkvm-interface",
-
-    # Guest compilers
-    "docker/sp1",
-    "docker/risc0",
 ]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.0.10"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT OR Apache-2.0"
@@ -37,6 +33,13 @@ hex = "0.4.3"
 # local dependencies
 zkvm-interface = { path = "crates/zkvm-interface" }
 build-utils = { path = "crates/build-utils" }
+ere-jolt = { path = "crates/ere-jolt" }
+ere-nexus = { path = "crates/ere-nexus" }
+ere-openvm = { path = "crates/ere-openvm" }
+ere-pico = { path = "crates/ere-pico" }
+ere-risc0 = { path = "crates/ere-risc0" }
+ere-sp1 = { path = "crates/ere-sp1" }
+ere-zisk = { path = "crates/ere-zisk" }
 
 [patch.crates-io]
 # These patches are only needed by Jolt

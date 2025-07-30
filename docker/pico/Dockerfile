@@ -19,16 +19,10 @@ RUN /tmp/install_pico_sdk.sh && rm /tmp/install_pico_sdk.sh # Clean up the scrip
 # Define the Pico toolchain for convenience in subsequent commands if needed, though cargo pico should use it.
 ENV PICO_TOOLCHAIN_VERSION="nightly-2024-11-27"
 
+# Set default toolchain
+RUN rustup default "$PICO_TOOLCHAIN_VERSION"
+
 # Verify Pico installation
-RUN echo "Verifying Pico installation in Dockerfile (post-script)..." && cargo "+${PICO_TOOLCHAIN_VERSION}" pico --version
+RUN echo "Verifying Pico installation in Dockerfile (post-script)..." && cargo pico --version
 
-# Copy the entire ere project context
-# The WORKDIR is /app from the base image
-WORKDIR /app
-COPY . .
-
-# Run tests
-RUN echo "Running tests for ere-pico library..." && \
-    cargo "+${PICO_TOOLCHAIN_VERSION}" test --release -p ere-pico --lib -- --color always
-
-CMD ["/bin/bash"] 
+CMD ["/bin/bash"]
