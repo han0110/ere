@@ -93,7 +93,7 @@ jobs:
           file: docker/${{ inputs.zkvm }}/Dockerfile
           load: true
           tags: ere-base-${{ inputs.zkvm }}:${{ github.sha }}
-          build-arg: |
+          build-args: |
             CI=1
             BASE_IMAGE_TAG=${{ github.sha }}
           cache-from: type=gha
