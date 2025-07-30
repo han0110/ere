@@ -86,7 +86,7 @@ impl ErezkVM {
                 )
                 .tag(self.base_zkvm_tag(ERE_VERSION))
                 .tag(self.base_zkvm_tag("latest"))
-                .bulid_arg("BASE_IMAGE_TAG", ERE_VERSION)
+                .bulid_arg("BASE_IMAGE_TAG", self.base_tag(ERE_VERSION))
                 .run(&workspace_dir)?;
         }
 

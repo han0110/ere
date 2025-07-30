@@ -1,6 +1,5 @@
-ARG BASE_IMAGE_TAG=latest
-
-FROM ere-base:${BASE_IMAGE_TAG}
+ARG BASE_IMAGE_TAG=ere-base:latest
+FROM ${BASE_IMAGE_TAG}
 
 # Copy and run the Risc0 SDK installer script
 COPY scripts/sdk_installers/install_risc0_sdk.sh /tmp/install_risc0_sdk.sh

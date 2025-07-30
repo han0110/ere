@@ -1,5 +1,5 @@
-ARG BASE_IMAGE_TAG=latest
-FROM ere-base:${BASE_IMAGE_TAG}
+ARG BASE_IMAGE_TAG=ere-base:latest
+FROM ${BASE_IMAGE_TAG}
 
 # The ere-base image provides Rust, Cargo, and common tools.
 # ZisK requires Ubuntu 22.04 or higher (ere-base uses 22.04 by default).
