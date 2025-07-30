@@ -77,7 +77,7 @@ jobs:
           context: .
           file: docker/base/Dockerfile.base
           push: true
-          tags: ere-base:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository }}/ere-base:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
