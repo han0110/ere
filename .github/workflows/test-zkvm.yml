@@ -108,7 +108,7 @@ jobs:
         with:
           context: .
           file: docker/${{ inputs.zkvm }}/Dockerfile
-          load: true
+          push: true
           tags: ghcr.io/${{ github.repository }}/ere-base-${{ inputs.zkvm }}:${{ steps.get_tag.outputs.tag }}
           build-args: |
             CI=1
