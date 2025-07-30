@@ -1,0 +1,112 @@
+name: Test and clippy zkVM
+
+on:
+  workflow_call:
+    inputs:
+      zkvm:
+        description: 'zkVM to test'
+        required: true
+        type: string
+      toolchain:
+        description: 'Rust toolchain to use'
+        required: false
+        type: string
+        default: 1.85.0
+      test_ere_dockerized:
+        description: 'Whether test ere-dockerized with the selected zkVM or not'
+        required: false
+        type: boolean
+        default: true
+      # Remove when we use larger runners, currently only needed to skip some zisk test
+      test_options:
+        description: 'Cargo test options when testing via Docker'
+        required: false
+        type: string
+        default: ''
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ inputs.toolchain }}
+          components: clippy
+
+      - name: Run cargo clippy for ere-${{ inputs.zkvm }}
+        run: |
+          cargo +${{ inputs.toolchain }} clippy --all-targets \
+            --package ere-${{ inputs.zkvm }} \
+            -- -D warnings
+
+      - name: Run cargo clippy for ere-cli with feature ${{ inputs.zkvm }}
+        run: |
+          cargo +${{ inputs.toolchain }} clippy --all-targets \
+            --package ere-cli \
+            --features ${{ inputs.zkvm }} \
+            -- -D warnings
+
+  test-via-docker:
+    name: Test via Docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ere-base image
+        run: |
+          docker build \
+            --tag ere-base:latest \
+            --file docker/base/Dockerfile.base .
+
+      - name: Build ere-base-${{ inputs.zkvm }} image
+        run: |
+          docker build \
+            --tag ere-base-${{ inputs.zkvm }}:latest \
+            --file docker/${{ inputs.zkvm }}/Dockerfile \
+            --build-arg CI=1 .
+
+      - name: Run cargo test for ere-${{ inputs.zkvm }} via Docker
+        run: |
+          docker run \
+            --rm \
+            --volume ${{ github.workspace }}:/ere \
+            --workdir /ere \
+            ere-base-${{ inputs.zkvm }}:latest \
+            cargo test --release --package ere-${{ inputs.zkvm }} -- ${{ inputs.test_options }}
+
+  test-ere-dockerized:
+    name: Test ere-dockerized with the selected zkVM
+    if: ${{ inputs.test_ere_dockerized }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ inputs.toolchain }}
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run cargo test for ere-${{ inputs.zkvm }} via ere-dockerized
+        if: ${{ inputs.test_ere_dockerized }}
+        env:
+          ERE_SKIP_REBUILD_DOCKER_IMAGE: true
+        run: cargo +${{ inputs.toolchain }} test --release --package ere-dockerized -- ${{ inputs.zkvm }}

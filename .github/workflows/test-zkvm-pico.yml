@@ -1,0 +1,32 @@
+name: Test and clippy Pico
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+    path:
+      - 'Cargo.toml'
+      - 'crates/build-utils/**'
+      - 'crates/zkvm-interface/**'
+      - 'crates/ere-cli/**'
+      - 'crates/ere-dockerized/**'
+      - 'docker/base/**'
+      - 'crates/ere-pico/**'
+      - 'docker/pico/**'
+      - 'tests/pico/**'
+      - 'scripts/sdk_installers/install_pico_sdk.sh'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-zkvm.yml
+    with:
+      zkvm: pico
+      toolchain: nightly-2024-11-27
+      test_ere_dockerized: false
+      test_options: ''

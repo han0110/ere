@@ -1,0 +1,32 @@
+name: Test and clippy Jolt
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+    path:
+      - 'Cargo.toml'
+      - 'crates/build-utils/**'
+      - 'crates/zkvm-interface/**'
+      - 'crates/ere-cli/**'
+      - 'crates/ere-dockerized/**'
+      - 'docker/base/**'
+      - 'crates/ere-jolt/**'
+      - 'docker/jolt/**'
+      - 'tests/jolt/**'
+      - 'scripts/sdk_installers/install_jolt_sdk.sh'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-zkvm.yml
+    with:
+      zkvm: jolt
+      toolchain: 1.85.0
+      test_ere_dockerized: false
+      test_options: ''

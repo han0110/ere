@@ -37,14 +37,19 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/$(. /etc/os-re
     apt install -y cuda-toolkit && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# If current environment is in CI or not.
+ARG CI
+
 # Copy the ZisK SDK installer script from the workspace context
 COPY scripts/sdk_installers/install_zisk_sdk.sh /tmp/install_zisk_sdk.sh
 RUN chmod +x /tmp/install_zisk_sdk.sh
 
 # Run the ZisK SDK installation script using ziskup.
-# This script installs the 'zisk' Rust toolchain and cargo-zisk.
-# TODO: Download the proving key if the CI runner has enough disk space.
-RUN SETUP_KEY=verify /tmp/install_zisk_sdk.sh && rm /tmp/install_zisk_sdk.sh # Clean up the script
+# This script installs the 'zisk' Rust toolchain and `cargo-zisk`
+# If current environment is in CI, we only install verifying key because proving key is too large.
+RUN if [ "$CI"="1" ]; then export SETUP_KEY=verify; fi && \
+    /tmp/install_zisk_sdk.sh && \
+    rm /tmp/install_zisk_sdk.sh # Clean up the script
 
 # The 'zisk' Rust toolchain is now installed.
 # cargo-zisk is installed in /root/.zisk/bin.

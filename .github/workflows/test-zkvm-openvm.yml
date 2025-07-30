@@ -1,0 +1,33 @@
+name: Test and clippy OpenVM
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+    path:
+      - 'Cargo.toml'
+      - 'crates/build-utils/**'
+      - 'crates/zkvm-interface/**'
+      - 'crates/ere-cli/**'
+      - 'crates/ere-dockerized/**'
+      - 'docker/base/**'
+      - 'crates/ere-openvm/**'
+      - 'docker/openvm/**'
+      - 'tests/openvm/**'
+      - 'scripts/sdk_installers/install_openvm_sdk.sh'
+
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-zkvm.yml
+    with:
+      zkvm: openvm
+      toolchain: 1.85.0
+      test_ere_dockerized: true
+      test_options: ''

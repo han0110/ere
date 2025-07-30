@@ -1,0 +1,32 @@
+name: Test and clippy SP1
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+    path:
+      - 'Cargo.toml'
+      - 'crates/build-utils/**'
+      - 'crates/zkvm-interface/**'
+      - 'crates/ere-cli/**'
+      - 'crates/ere-dockerized/**'
+      - 'docker/base/**'
+      - 'crates/ere-sp1/**'
+      - 'docker/sp1/**'
+      - 'tests/sp1/**'
+      - 'scripts/sdk_installers/install_sp1_sdk.sh'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-zkvm.yml
+    with:
+      zkvm: sp1
+      toolchain: 1.85.0
+      test_ere_dockerized: true
+      test_options: ''

@@ -1,0 +1,33 @@
+name: Test and clippy Nexus
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+    path:
+      - 'Cargo.toml'
+      - 'crates/build-utils/**'
+      - 'crates/zkvm-interface/**'
+      - 'crates/ere-cli/**'
+      - 'crates/ere-dockerized/**'
+      - 'docker/base/**'
+      - 'crates/ere-nexus/**'
+      - 'docker/nexus/**'
+      - 'tests/nexus/**'
+      - 'scripts/sdk_installers/install_nexus_sdk.sh'
+
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-zkvm.yml
+    with:
+      zkvm: nexus
+      toolchain: nightly-2025-06-05
+      test_ere_dockerized: false
+      test_options: ''
