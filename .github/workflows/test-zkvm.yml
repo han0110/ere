@@ -81,6 +81,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Pull ere-base image and tag for local
+        run: |
+          docker pull ghcr.io/${{ github.repository }}/ere-base:${{ github.sha }}
+          docker tag ghcr.io/${{ github.repository }}/ere-base:${{ github.sha }} ere-base:${{ github.sha }}
+
       - name: Build ere-base-${{ inputs.zkvm }} image
         uses: docker/build-push-action@v6
         with:
