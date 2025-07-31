@@ -27,14 +27,9 @@ impl Compiler for JOLT_TARGET {
 
     type Program = Vec<u8>;
 
-    fn compile(
-        workspace_directory: &Path,
-        guest_relative: &Path,
-    ) -> Result<Self::Program, Self::Error> {
-        let guest_dir = workspace_directory.join(guest_relative);
-
+    fn compile(&self, guest_dir: &Path) -> Result<Self::Program, Self::Error> {
         // Change current directory for `Program::build` to build guest program.
-        set_current_dir(&guest_dir).map_err(|source| CompileError::SetCurrentDirFailed {
+        set_current_dir(guest_dir).map_err(|source| CompileError::SetCurrentDirFailed {
             source,
             path: guest_dir.to_path_buf(),
         })?;
@@ -153,7 +148,7 @@ pub fn program(elf: &[u8]) -> Result<(TempDir, jolt::host::Program), zkVMError> 
 #[cfg(test)]
 mod tests {
     use crate::{EreJolt, JOLT_TARGET};
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
     use zkvm_interface::{Compiler, Input, ProverResourceType, zkVM};
 
     // TODO: for now, we just get one test file
@@ -172,29 +167,29 @@ mod tests {
     #[test]
     fn test_compile_trait() {
         let test_guest_path = get_compile_test_guest_program_path();
-        let elf = JOLT_TARGET::compile(&test_guest_path, Path::new("")).unwrap();
+        let elf = JOLT_TARGET.compile(&test_guest_path).unwrap();
         assert!(!elf.is_empty(), "elf has not been compiled");
     }
 
     #[test]
     fn test_execute() {
         let test_guest_path = get_compile_test_guest_program_path();
-        let program = JOLT_TARGET::compile(&test_guest_path, Path::new("")).unwrap();
+        let elf = JOLT_TARGET.compile(&test_guest_path).unwrap();
         let mut inputs = Input::new();
         inputs.write(1_u32);
 
-        let zkvm = EreJolt::new(program, ProverResourceType::Cpu).unwrap();
+        let zkvm = EreJolt::new(elf, ProverResourceType::Cpu).unwrap();
         zkvm.execute(&inputs).unwrap();
     }
 
     #[test]
     fn test_prove_verify() {
         let test_guest_path = get_compile_test_guest_program_path();
-        let program = JOLT_TARGET::compile(&test_guest_path, Path::new("")).unwrap();
+        let elf = JOLT_TARGET.compile(&test_guest_path).unwrap();
         let mut inputs = Input::new();
         inputs.write(1_u32);
 
-        let zkvm = EreJolt::new(program, ProverResourceType::Cpu).unwrap();
+        let zkvm = EreJolt::new(elf, ProverResourceType::Cpu).unwrap();
         let (proof, _) = zkvm.prove(&inputs).unwrap();
         zkvm.verify(&proof).unwrap();
     }

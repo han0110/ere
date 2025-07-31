@@ -13,9 +13,6 @@ members = [
     "crates/zkvm-interface",
     # CLI
     "crates/ere-cli",
-    # Guest compilers
-    "docker/sp1",
-    "docker/risc0",
 ]
 resolver = "2"
 
