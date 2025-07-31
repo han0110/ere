@@ -11,8 +11,9 @@ members = [
     "crates/ere-zisk",
     # zkVM interface
     "crates/zkvm-interface",
-    # CLI
+    # CLI and dockerized zkVM
     "crates/ere-cli",
+    "crates/ere-dockerized",
 ]
 resolver = "2"
 
@@ -36,6 +37,7 @@ hex = "0.4.3"
 zkvm-interface = { path = "crates/zkvm-interface" }
 build-utils = { path = "crates/build-utils" }
 ere-cli = { path = "crates/ere-cli" }
+ere-dockerized = { path = "crates/ere-dockerized" }
 ere-jolt = { path = "crates/ere-jolt" }
 ere-nexus = { path = "crates/ere-nexus" }
 ere-openvm = { path = "crates/ere-openvm" }

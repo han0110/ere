@@ -2360,6 +2360,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ere-dockerized"
+version = "0.1.0"
+dependencies = [
+ "bincode",
+ "build-utils",
+ "bytemuck",
+ "cargo_metadata 0.19.2",
+ "risc0-zkvm",
+ "serde",
+ "tempfile",
+ "thiserror 2.0.12",
+ "zkvm-interface",
+]
+
+[[package]]
 name = "ere-jolt"
 version = "0.1.0"
 dependencies = [

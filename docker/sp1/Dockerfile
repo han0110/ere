@@ -1,7 +1,6 @@
-ARG BASE_IMAGE_TAG=latest
+ARG BASE_IMAGE_TAG=ere-base:latest
 
-# Build zkVM builder image
-FROM ere-base:${BASE_IMAGE_TAG}
+FROM ${BASE_IMAGE_TAG}
 
 ARG USERNAME=ere_user
 

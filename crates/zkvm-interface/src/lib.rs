@@ -35,6 +35,19 @@ pub enum ProverResourceType {
     Network(NetworkProverConfig),
 }
 
+#[cfg(feature = "clap")]
+impl ProverResourceType {
+    pub fn to_args(&self) -> Vec<&str> {
+        match self {
+            Self::Cpu => vec!["cpu"],
+            Self::Gpu => vec!["gpu"],
+            Self::Network(config) => core::iter::once("network")
+                .chain(config.to_args())
+                .collect(),
+        }
+    }
+}
+
 /// An error that can occur during prove, execute or verification
 /// of a zkVM.
 ///
