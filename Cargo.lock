@@ -1123,7 +1123,7 @@ dependencies = [
 
 [[package]]
 name = "build-utils"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "cargo_metadata 0.20.0",
  "thiserror 2.0.12",
@@ -2343,7 +2343,7 @@ dependencies = [
 
 [[package]]
 name = "ere-cli"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "anyhow",
  "bincode",
@@ -2361,7 +2361,7 @@ dependencies = [
 
 [[package]]
 name = "ere-dockerized"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "bincode",
  "build-utils",
@@ -2376,7 +2376,7 @@ dependencies = [
 
 [[package]]
 name = "ere-jolt"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "ark-serialize 0.5.0",
  "build-utils",
@@ -2392,7 +2392,7 @@ dependencies = [
 
 [[package]]
 name = "ere-nexus"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "anyhow",
  "bincode",
@@ -2406,7 +2406,7 @@ dependencies = [
 
 [[package]]
 name = "ere-openvm"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "build-utils",
  "openvm-build",
@@ -2422,7 +2422,7 @@ dependencies = [
 
 [[package]]
 name = "ere-pico"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "bincode",
  "build-utils",
@@ -2433,7 +2433,7 @@ dependencies = [
 
 [[package]]
 name = "ere-risc0"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "anyhow",
  "bincode",
@@ -2454,7 +2454,7 @@ dependencies = [
 
 [[package]]
 name = "ere-sp1"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "bincode",
  "build-utils",
@@ -2468,7 +2468,7 @@ dependencies = [
 
 [[package]]
 name = "ere-zisk"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "bincode",
  "blake3",
@@ -11127,7 +11127,7 @@ dependencies = [
 
 [[package]]
 name = "zkvm-interface"
-version = "0.1.0"
+version = "0.0.10"
 dependencies = [
  "anyhow",
  "auto_impl",
