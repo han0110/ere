@@ -1,0 +1,18 @@
+name: Test and clippy OpenVM
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-zkvm.yml
+    with:
+      zkvm: openvm
+      toolchain: 1.85.0
+      test_ere_dockerized: true
+      test_options: ''
