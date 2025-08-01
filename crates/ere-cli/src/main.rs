@@ -1,3 +1,5 @@
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+
 use anyhow::{Context, Error};
 use clap::{Parser, Subcommand};
 use std::{fs, path::PathBuf};
@@ -31,12 +33,9 @@ struct Cli {
 enum Commands {
     /// Compile a guest program
     Compile {
-        /// Path to the base directory (workspace root)
+        /// Path to the guest program
         #[arg(long)]
-        mount_directory: PathBuf,
-        /// Relative path from `mount_directory` to the guest program
-        #[arg(long)]
-        guest_relative: PathBuf,
+        guest_path: PathBuf,
         /// Path where the compiled program will be written
         #[arg(long)]
         program_path: PathBuf,
@@ -90,10 +89,9 @@ fn main() -> Result<(), Error> {
 
     match args.command {
         Commands::Compile {
-            mount_directory,
-            guest_relative,
+            guest_path,
             program_path,
-        } => compile(mount_directory, guest_relative, program_path),
+        } => compile(guest_path, program_path),
         Commands::Prove {
             program_path,
             input_path,
@@ -114,31 +112,27 @@ fn main() -> Result<(), Error> {
     }
 }
 
-fn compile(
-    mount_directory: PathBuf,
-    guest_relative: PathBuf,
-    program_path: PathBuf,
-) -> Result<(), Error> {
+fn compile(guest_path: PathBuf, program_path: PathBuf) -> Result<(), Error> {
     #[cfg(feature = "jolt")]
-    let program = ere_jolt::JOLT_TARGET::compile(&mount_directory, &guest_relative);
+    let program = ere_jolt::JOLT_TARGET.compile(&guest_path);
 
     #[cfg(feature = "nexus")]
-    let program = ere_nexus::NEXUS_TARGET::compile(&mount_directory, &guest_relative);
+    let program = ere_nexus::NEXUS_TARGET.compile(&guest_path);
 
     #[cfg(feature = "openvm")]
-    let program = ere_openvm::OPENVM_TARGET::compile(&mount_directory, &guest_relative);
+    let program = ere_openvm::OPENVM_TARGET.compile(&guest_path);
 
     #[cfg(feature = "pico")]
-    let program = ere_pico::PICO_TARGET::compile(&mount_directory, &guest_relative);
+    let program = ere_pico::PICO_TARGET.compile(&guest_path);
 
     #[cfg(feature = "risc0")]
-    let program = ere_risc0::RV32_IM_RISC0_ZKVM_ELF::compile(&mount_directory, &guest_relative);
+    let program = ere_risc0::RV32_IM_RISC0_ZKVM_ELF.compile(&guest_path);
 
     #[cfg(feature = "sp1")]
-    let program = ere_sp1::RV32_IM_SUCCINCT_ZKVM_ELF::compile(&mount_directory, &guest_relative);
+    let program = ere_sp1::RV32_IM_SUCCINCT_ZKVM_ELF.compile(&guest_path);
 
     #[cfg(feature = "zisk")]
-    let program = ere_zisk::RV64_IMA_ZISK_ZKVM_ELF::compile(&mount_directory, &guest_relative);
+    let program = ere_zisk::RV64_IMA_ZISK_ZKVM_ELF.compile(&guest_path);
 
     serde::write(
         &program_path,

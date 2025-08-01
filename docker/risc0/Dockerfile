@@ -1,14 +1,6 @@
-ARG BASE_IMAGE_TAG=latest
+ARG BASE_IMAGE_TAG=ere-base:latest
 
-FROM rust:1.85 AS builder
-
-WORKDIR /risc0-cli
-
-# Build `risc0-cli`
-COPY . .
-RUN cargo build --release -p risc0-cli
-
-FROM ere-base:${BASE_IMAGE_TAG}
+FROM ${BASE_IMAGE_TAG}
 
 # Copy and run the Risc0 SDK installer script
 COPY scripts/sdk_installers/install_risc0_sdk.sh /tmp/install_risc0_sdk.sh
@@ -22,8 +14,4 @@ RUN echo "Verifying Risc0 installation in Dockerfile (post-script)..." && cargo 
 # Get docker for `cargo risczero build`
 RUN curl -fsSL https://get.docker.com | sh
 
-# Copy guest compiler binary
-COPY --from=builder /risc0-cli/target/release/risc0-cli /risc0-cli/risc0-cli
-
-# Set entrypoint to `risc0-cli`
-ENTRYPOINT ["/risc0-cli/risc0-cli"]
+CMD ["/bin/bash"]

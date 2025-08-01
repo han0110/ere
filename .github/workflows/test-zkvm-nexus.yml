@@ -1,0 +1,18 @@
+name: Test and clippy Nexus
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-zkvm.yml
+    with:
+      zkvm: nexus
+      toolchain: nightly-2025-06-05
+      test_ere_dockerized: false
+      test_options: ''

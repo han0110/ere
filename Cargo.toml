@@ -11,16 +11,14 @@ members = [
     "crates/ere-zisk",
     # zkVM interface
     "crates/zkvm-interface",
-    # CLI
+    # CLI and dockerized zkVM
     "crates/ere-cli",
-    # Guest compilers
-    "docker/sp1",
-    "docker/risc0",
+    "crates/ere-dockerized",
 ]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.0.10"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT OR Apache-2.0"
@@ -39,6 +37,7 @@ hex = "0.4.3"
 zkvm-interface = { path = "crates/zkvm-interface" }
 build-utils = { path = "crates/build-utils" }
 ere-cli = { path = "crates/ere-cli" }
+ere-dockerized = { path = "crates/ere-dockerized" }
 ere-jolt = { path = "crates/ere-jolt" }
 ere-nexus = { path = "crates/ere-nexus" }
 ere-openvm = { path = "crates/ere-openvm" }
