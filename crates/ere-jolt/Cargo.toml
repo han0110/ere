@@ -1,20 +1,20 @@
 [package]
-name = "ere-jolt"
-version.workspace = true
 edition.workspace = true
-rust-version.workspace = true
 license.workspace = true
+name = "ere-jolt"
+rust-version.workspace = true
+version.workspace = true
 
 [dependencies]
-zkvm-interface = { workspace = true }
-jolt-sdk = { git = "https://github.com/a16z/jolt", rev = "55b9830", features = ["host"] }
-jolt-core = { git = "https://github.com/a16z/jolt", rev = "55b9830", features = ["host"] }
-jolt = { git = "https://github.com/a16z/jolt", rev = "55b9830", features = ["host"] }
-common = { git = "https://github.com/a16z/jolt", rev = "55b9830" }
+ark-serialize = { version = "0.5.0", features = ["derive"] }
+common = { git = "https://github.com/a16z/jolt", tag = "v0.1.0-alpha" }
+jolt = { git = "https://github.com/a16z/jolt", tag = "v0.1.0-alpha", features = ["host"] }
+jolt-core = { git = "https://github.com/a16z/jolt", tag = "v0.1.0-alpha", features = ["host"] }
+jolt-sdk = { git = "https://github.com/a16z/jolt", tag = "v0.1.0-alpha", features = ["host"] }
+tempfile = "3.3"
 thiserror = "2"
 toml = "0.8"
-ark-serialize = { version = "0.5.0", features = ["derive"] }
-tempfile = "3.3"
+zkvm-interface = { workspace = true }
 
 [build-dependencies]
 build-utils = { workspace = true }

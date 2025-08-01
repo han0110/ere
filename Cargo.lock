@@ -925,7 +925,7 @@ dependencies = [
  "bitflags 2.9.0",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools 0.11.0",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -1393,7 +1393,7 @@ checksum = "5b63caa9aa9397e2d9480a9b13673856c78d8ac123288526c37d7839f2a86990"
 [[package]]
 name = "common"
 version = "0.2.0"
-source = "git+https://github.com/a16z/jolt?rev=55b9830#55b9830a3944dde55d33a55c42522b81dd49f87a"
+source = "git+https://github.com/a16z/jolt?tag=v0.1.0-alpha#55b9830a3944dde55d33a55c42522b81dd49f87a"
 dependencies = [
  "ark-serialize 0.5.0",
  "serde",
@@ -3746,7 +3746,7 @@ dependencies = [
 [[package]]
 name = "jolt"
 version = "0.1.0"
-source = "git+https://github.com/a16z/jolt?rev=55b9830#55b9830a3944dde55d33a55c42522b81dd49f87a"
+source = "git+https://github.com/a16z/jolt?tag=v0.1.0-alpha#55b9830a3944dde55d33a55c42522b81dd49f87a"
 dependencies = [
  "clap",
  "common",
@@ -3764,7 +3764,7 @@ dependencies = [
 [[package]]
 name = "jolt-core"
 version = "0.1.0"
-source = "git+https://github.com/a16z/jolt?rev=55b9830#55b9830a3944dde55d33a55c42522b81dd49f87a"
+source = "git+https://github.com/a16z/jolt?tag=v0.1.0-alpha#55b9830a3944dde55d33a55c42522b81dd49f87a"
 dependencies = [
  "alloy-primitives 0.7.7",
  "alloy-sol-types 0.7.7",
@@ -3818,7 +3818,7 @@ dependencies = [
 [[package]]
 name = "jolt-sdk"
 version = "0.1.0"
-source = "git+https://github.com/a16z/jolt?rev=55b9830#55b9830a3944dde55d33a55c42522b81dd49f87a"
+source = "git+https://github.com/a16z/jolt?tag=v0.1.0-alpha#55b9830a3944dde55d33a55c42522b81dd49f87a"
 dependencies = [
  "ark-bn254",
  "ark-ec",
@@ -3832,7 +3832,7 @@ dependencies = [
 [[package]]
 name = "jolt-sdk-macros"
 version = "0.1.0"
-source = "git+https://github.com/a16z/jolt?rev=55b9830#55b9830a3944dde55d33a55c42522b81dd49f87a"
+source = "git+https://github.com/a16z/jolt?tag=v0.1.0-alpha#55b9830a3944dde55d33a55c42522b81dd49f87a"
 dependencies = [
  "common",
  "proc-macro2",
@@ -7204,7 +7204,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22505a5c94da8e3b7c2996394d1c933236c4d743e81a410bcca4e6989fc066a4"
 dependencies = [
  "bytes",
- "heck 0.5.0",
+ "heck 0.4.1",
  "itertools 0.12.1",
  "log",
  "multimap",
@@ -9999,7 +9999,7 @@ checksum = "8df9b6e13f2d32c91b9bd719c00d1958837bc7dec474d94952798cc8e69eeec3"
 [[package]]
 name = "tracer"
 version = "0.2.0"
-source = "git+https://github.com/a16z/jolt?rev=55b9830#55b9830a3944dde55d33a55c42522b81dd49f87a"
+source = "git+https://github.com/a16z/jolt?tag=v0.1.0-alpha#55b9830a3944dde55d33a55c42522b81dd49f87a"
 dependencies = [
  "clap",
  "common",
