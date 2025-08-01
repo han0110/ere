@@ -1,3 +1,51 @@
+//! # Ere Dockerized
+//!
+//! A Docker-based wrapper for other zkVM crates `ere-{zkvm}`.
+//!
+//! This crate provides a unified interface to dockerize the `Compiler` and
+//! `zkVM` implementation of other zkVM crates `ere-{zkvm}`, it requires only
+//! `docker` to be installed, but no zkVM specific SDK.
+//!
+//! ## Example
+//!
+//! ```rust,no_run
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! use ere_dockerized::{EreDockerizedCompiler, EreDockerizedzkVM, ErezkVM};
+//! use zkvm_interface::{Compiler, Input, ProverResourceType, zkVM};
+//! use std::path::Path;
+//!
+//! // Compile a guest program
+//! let compiler = EreDockerizedCompiler(ErezkVM::SP1);
+//! let guest_path = Path::new("path/to/guest/program");
+//! let program = compiler.compile(&guest_path)?;
+//!
+//! // Create zkVM instance
+//! let zkvm = EreDockerizedzkVM::new(
+//!     ErezkVM::SP1,
+//!     program,
+//!     ProverResourceType::Cpu
+//! )?;
+//!
+//! // Prepare inputs
+//! let mut inputs = Input::new();
+//! inputs.write(42u32);
+//! inputs.write(100u16);
+//!
+//! // Execute program
+//! let execution_report = zkvm.execute(&inputs)?;
+//! println!("Execution cycles: {}", execution_report.total_num_cycles);
+//!
+//! // Generate proof
+//! let (proof, proving_report) = zkvm.prove(&inputs)?;
+//! println!("Proof generated in: {:?}", proving_report.proving_time);
+//!
+//! // Verify proof
+//! zkvm.verify(&proof)?;
+//! println!("Proof verified successfully!");
+//! # Ok(())
+//! # }
+//! ```
+
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 use crate::{
@@ -26,7 +74,7 @@ pub mod docker;
 pub mod error;
 pub mod input;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ErezkVM {
     Jolt,
     Nexus,
@@ -62,6 +110,13 @@ impl ErezkVM {
         format!("ere-cli-{self}:{version}")
     }
 
+    /// This method builds 3 Docker images in sequence:
+    /// 1. `ere-base:latest`: Base image with common dependencies
+    /// 2. `ere-base-{zkvm}:latest`: zkVM-specific base image with the zkVM SDK
+    /// 3. `ere-cli-{zkvm}:latest`: CLI image with the `ere-cli` binary built with feature `{zkvm}`
+    ///
+    /// Images are cached and only rebuilt if they don't exist or if the
+    /// `ERE_FORCE_REBUILD_DOCKER_IMAGE=true` environment variable is set.
     pub fn build_docker_image(&self) -> Result<(), CommonError> {
         let workspace_dir = workspace_dir();
 
