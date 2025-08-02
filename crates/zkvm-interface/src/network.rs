@@ -12,3 +12,13 @@ pub struct NetworkProverConfig {
     /// Optional API key for authentication
     pub api_key: Option<String>,
 }
+
+#[cfg(feature = "clap")]
+impl NetworkProverConfig {
+    pub fn to_args(&self) -> Vec<&str> {
+        core::iter::once(["--endpoint", self.endpoint.as_str()])
+            .chain(self.api_key.as_deref().map(|val| ["--api-key", val]))
+            .flatten()
+            .collect()
+    }
+}
