@@ -3,6 +3,7 @@
 use anyhow::{Context, Error};
 use clap::{Parser, Subcommand};
 use std::{fs, path::PathBuf};
+use tracing_subscriber::EnvFilter;
 use zkvm_interface::{Compiler, ProverResourceType, zkVM};
 
 mod serde;
@@ -51,9 +52,6 @@ enum Commands {
         /// Path where the execution report will be written
         #[arg(long)]
         report_path: PathBuf,
-        // Prover resource type
-        #[command(subcommand)]
-        resource: ProverResourceType,
     },
     /// Prove execution of a compiled program
     Prove {
@@ -85,6 +83,10 @@ enum Commands {
 }
 
 fn main() -> Result<(), Error> {
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env())
+        .init();
+
     let args = Cli::parse();
 
     match args.command {
@@ -92,6 +94,11 @@ fn main() -> Result<(), Error> {
             guest_path,
             program_path,
         } => compile(guest_path, program_path),
+        Commands::Execute {
+            program_path,
+            input_path,
+            report_path,
+        } => execute(program_path, input_path, report_path),
         Commands::Prove {
             program_path,
             input_path,
@@ -99,12 +106,6 @@ fn main() -> Result<(), Error> {
             report_path,
             resource,
         } => prove(program_path, resource, input_path, proof_path, report_path),
-        Commands::Execute {
-            program_path,
-            input_path,
-            report_path,
-            resource,
-        } => execute(program_path, resource, input_path, report_path),
         Commands::Verify {
             program_path,
             proof_path,
@@ -157,13 +158,8 @@ fn prove(
     Ok(())
 }
 
-fn execute(
-    program_path: PathBuf,
-    resource: ProverResourceType,
-    input_path: PathBuf,
-    report_path: PathBuf,
-) -> Result<(), Error> {
-    let zkvm = construct_zkvm(program_path, resource)?;
+fn execute(program_path: PathBuf, input_path: PathBuf, report_path: PathBuf) -> Result<(), Error> {
+    let zkvm = construct_zkvm(program_path, ProverResourceType::Cpu)?;
     let input = serde::read_input(&input_path)?;
     let report = zkvm.execute(&input).with_context(|| "Failed to execute")?;
     serde::write(&report_path, &report, "report")?;
@@ -171,7 +167,7 @@ fn execute(
 }
 
 fn verify(program_path: PathBuf, proof_path: PathBuf) -> Result<(), Error> {
-    let zkvm = construct_zkvm(program_path, ProverResourceType::default())?;
+    let zkvm = construct_zkvm(program_path, ProverResourceType::Cpu)?;
     let proof = fs::read(&proof_path)
         .with_context(|| format!("Failed to read proof from {}", proof_path.display()))?;
     zkvm.verify(&proof)
