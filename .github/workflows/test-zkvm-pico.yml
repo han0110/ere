@@ -1,0 +1,16 @@
+name: Test and clippy Pico
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-zkvm.yml
+    with:
+      zkvm: pico
+      toolchain: nightly-2024-11-27
+      test_ere_dockerized: false
+      test_options: ''
