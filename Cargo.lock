@@ -99,7 +99,7 @@ dependencies = [
  "itoa",
  "k256",
  "paste",
- "rand 0.9.1",
+ "rand 0.9.2",
  "ruint",
  "serde",
  "tiny-keccak",
@@ -1060,19 +1060,6 @@ dependencies = [
  "quote",
  "rustversion",
  "syn 2.0.101",
-]
-
-[[package]]
-name = "bonsai-sdk"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21055e2f49cbbdbfe9f8f96d597c5527b0c6ab7933341fdc2f147180e48a988e"
-dependencies = [
- "duplicate",
- "maybe-async",
- "reqwest",
- "serde",
- "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -2047,17 +2034,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 
 [[package]]
-name = "duplicate"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97af9b5f014e228b33e77d75ee0e6e87960124f0f4b16337b586a6bec91867b1"
-dependencies = [
- "heck 0.5.0",
- "proc-macro2",
- "proc-macro2-diagnostics",
-]
-
-[[package]]
 name = "ecdsa"
 version = "0.16.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2299,6 +2275,7 @@ dependencies = [
  "jolt",
  "jolt-core",
  "jolt-sdk",
+ "serde",
  "tempfile",
  "test-utils",
  "thiserror 2.0.12",
@@ -2313,6 +2290,7 @@ dependencies = [
  "bincode",
  "build-utils",
  "nexus-sdk",
+ "serde",
  "test-utils",
  "thiserror 2.0.12",
  "toml",
@@ -2346,6 +2324,7 @@ dependencies = [
  "build-utils",
  "pico-sdk",
  "pico-vm",
+ "serde",
  "test-utils",
  "thiserror 2.0.12",
  "zkvm-interface",
@@ -2374,6 +2353,7 @@ version = "0.0.11"
 dependencies = [
  "bincode",
  "build-utils",
+ "serde",
  "sp1-sdk",
  "tempfile",
  "test-utils",
@@ -3971,17 +3951,6 @@ checksum = "a06de3016e9fae57a36fd14dba131fccf49f74b40b7fbdb472f96e361ec71a08"
 dependencies = [
  "autocfg",
  "rawpointer",
-]
-
-[[package]]
-name = "maybe-async"
-version = "0.2.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cf92c10c7e361d6b99666ec1c6f9805b0bea2c3bd8c78dc6fe98ac5bd78db11"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.101",
 ]
 
 [[package]]
@@ -6990,19 +6959,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proc-macro2-diagnostics"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af066a9c399a26e020ada66a034357a868728e72cd426f3adcd35f80d88d88c8"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.101",
- "version_check",
- "yansi",
-]
-
-[[package]]
 name = "proptest"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7162,7 +7118,7 @@ dependencies = [
  "bytes",
  "getrandom 0.3.3",
  "lru-slab",
- "rand 0.9.1",
+ "rand 0.9.2",
  "ring",
  "rustc-hash 2.1.1",
  "rustls",
@@ -7245,9 +7201,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fbfd9d094a40bf3ae768db9361049ace4c0e04a4fd6b359518bd7b73a73dd97"
+checksum = "6db2770f06117d490610c7488547d543617b21bfa07796d7a12f6f1bd53850d1"
 dependencies = [
  "rand_chacha 0.9.0",
  "rand_core 0.9.3",
@@ -7590,7 +7546,7 @@ dependencies = [
  "elf",
  "lazy_static",
  "postcard",
- "rand 0.9.1",
+ "rand 0.9.2",
  "risc0-zkp",
  "risc0-zkvm-platform",
  "ruint",
@@ -7686,7 +7642,7 @@ dependencies = [
  "hex",
  "lazy-regex",
  "metal",
- "rand 0.9.1",
+ "rand 0.9.2",
  "rayon",
  "risc0-circuit-recursion-sys",
  "risc0-core",
@@ -7730,7 +7686,7 @@ dependencies = [
  "num-traits",
  "paste",
  "postcard",
- "rand 0.9.1",
+ "rand 0.9.2",
  "rayon",
  "ringbuffer",
  "risc0-binfmt",
@@ -7836,7 +7792,7 @@ dependencies = [
  "ndarray",
  "parking_lot",
  "paste",
- "rand 0.9.1",
+ "rand 0.9.2",
  "rand_core 0.9.3",
  "rayon",
  "risc0-core",
@@ -7857,7 +7813,6 @@ dependencies = [
  "addr2line",
  "anyhow",
  "bincode",
- "bonsai-sdk",
  "borsh",
  "bytemuck",
  "bytes",
@@ -7874,7 +7829,7 @@ dependencies = [
  "num-traits",
  "object",
  "prost 0.13.5",
- "rand 0.9.1",
+ "rand 0.9.2",
  "rayon",
  "risc0-binfmt",
  "risc0-build",
@@ -8015,7 +7970,7 @@ dependencies = [
  "primitive-types",
  "proptest",
  "rand 0.8.5",
- "rand 0.9.1",
+ "rand 0.9.2",
  "rlp",
  "ruint-macro",
  "serde",
@@ -9401,6 +9356,7 @@ dependencies = [
 name = "test-utils"
 version = "0.0.11"
 dependencies = [
+ "rand 0.9.2",
  "serde",
  "zkvm-interface",
 ]
@@ -10072,7 +10028,7 @@ checksum = "3cf4199d1e5d15ddd86a694e4d0dffa9c323ce759fea589f00fef9d81cc1931d"
 dependencies = [
  "getrandom 0.3.3",
  "js-sys",
- "rand 0.9.1",
+ "rand 0.9.2",
  "wasm-bindgen",
 ]
 
@@ -10669,12 +10625,6 @@ dependencies = [
  "encoding_rs",
  "hashlink",
 ]
-
-[[package]]
-name = "yansi"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cfe53a6657fd280eaa890a3bc59152892ffa3e30101319d168b781ed6529b049"
 
 [[package]]
 name = "yoke"
