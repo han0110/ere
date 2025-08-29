@@ -9,12 +9,19 @@ use openvm_sdk::{
     codec::{Decode, Encode},
     commit::AppExecutionCommit,
     config::{AppConfig, DEFAULT_APP_LOG_BLOWUP, DEFAULT_LEAF_LOG_BLOWUP, SdkVmConfig},
-    keygen::AggVerifyingKey,
+    fs::read_object_from_file,
+    keygen::{AggProvingKey, AggVerifyingKey, AppProvingKey},
 };
 use openvm_stark_sdk::{config::FriParameters, openvm_stark_backend::p3_field::PrimeField32};
 use openvm_transpiler::{elf::Elf, openvm_platform::memory::MEM_SIZE};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use std::{fs, io::Read, path::Path, sync::Arc, time::Instant};
+use std::{
+    env, fs,
+    io::Read,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Instant,
+};
 use zkvm_interface::{
     Compiler, Input, InputItem, ProgramExecutionReport, ProgramProvingReport, Proof,
     ProverResourceType, PublicValues, zkVM, zkVMError,
@@ -92,6 +99,8 @@ impl Compiler for OPENVM_TARGET {
 pub struct EreOpenVM {
     app_config: AppConfig<SdkVmConfig>,
     app_exe: Arc<VmExe<F>>,
+    app_pk: AppProvingKey<SdkVmConfig>,
+    agg_pk: AggProvingKey,
     agg_vk: AggVerifyingKey,
     app_commit: AppExecutionCommit,
     _resource: ProverResourceType,
@@ -106,7 +115,13 @@ impl EreOpenVM {
 
         let app_exe = sdk.convert_to_exe(elf).map_err(CommonError::Transpile)?;
 
-        let (_, agg_vk) = sdk.agg_keygen().map_err(CommonError::AggKeyGen)?;
+        let (app_pk, _) = sdk.app_keygen();
+
+        let agg_pk = read_object_from_file::<AggProvingKey, _>(agg_pk_path())
+            .map_err(|e| CommonError::ReadAggKeyFailed(e.into()))?;
+        let agg_vk = agg_pk.get_agg_vk();
+
+        let _ = sdk.set_agg_pk(agg_pk.clone());
 
         let app_commit = sdk
             .prover(app_exe.clone())
@@ -116,6 +131,8 @@ impl EreOpenVM {
         Ok(Self {
             app_config: program.app_config,
             app_exe,
+            app_pk,
+            agg_pk,
             agg_vk,
             app_commit,
             _resource,
@@ -123,7 +140,11 @@ impl EreOpenVM {
     }
 
     fn sdk(&self) -> Result<Sdk, CommonError> {
-        Sdk::new_without_transpiler(self.app_config.clone()).map_err(CommonError::SdkInit)
+        let sdk =
+            Sdk::new_without_transpiler(self.app_config.clone()).map_err(CommonError::SdkInit)?;
+        let _ = sdk.set_app_pk(self.app_pk.clone());
+        let _ = sdk.set_agg_pk(self.agg_pk.clone());
+        Ok(sdk)
     }
 }
 
@@ -239,6 +260,11 @@ fn extract_public_values(user_public_values: &[F]) -> Result<Vec<u8>, CommonErro
         .ok_or(CommonError::InvalidPublicValue)
 }
 
+pub fn agg_pk_path() -> PathBuf {
+    PathBuf::from(std::env::var("HOME").expect("env `$HOME` should be set"))
+        .join(".openvm/agg_stark.pk")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -258,11 +284,6 @@ mod tests {
             .clone()
     }
 
-    fn basic_program_ere_openvm() -> &'static EreOpenVM {
-        static ERE_OPENVM: OnceLock<EreOpenVM> = OnceLock::new();
-        ERE_OPENVM.get_or_init(|| EreOpenVM::new(basic_program(), ProverResourceType::Cpu).unwrap())
-    }
-
     #[test]
     fn test_compiler_impl() {
         let program = basic_program();
@@ -271,7 +292,8 @@ mod tests {
 
     #[test]
     fn test_execute() {
-        let zkvm = basic_program_ere_openvm();
+        let program = basic_program();
+        let zkvm = EreOpenVM::new(program, ProverResourceType::Cpu).unwrap();
 
         let io = BasicProgramIo::valid().into_output_hashed_io();
         let public_values = run_zkvm_execute(&zkvm, &io);
@@ -280,7 +302,8 @@ mod tests {
 
     #[test]
     fn test_execute_invalid_inputs() {
-        let zkvm = basic_program_ere_openvm();
+        let program = basic_program();
+        let zkvm = EreOpenVM::new(program, ProverResourceType::Cpu).unwrap();
 
         for inputs in [
             BasicProgramIo::empty(),
@@ -293,7 +316,8 @@ mod tests {
 
     #[test]
     fn test_prove() {
-        let zkvm = basic_program_ere_openvm();
+        let program = basic_program();
+        let zkvm = EreOpenVM::new(program, ProverResourceType::Cpu).unwrap();
 
         let io = BasicProgramIo::valid().into_output_hashed_io();
         let public_values = run_zkvm_prove(&zkvm, &io);
@@ -302,7 +326,8 @@ mod tests {
 
     #[test]
     fn test_prove_invalid_inputs() {
-        let zkvm = basic_program_ere_openvm();
+        let program = basic_program();
+        let zkvm = EreOpenVM::new(program, ProverResourceType::Cpu).unwrap();
 
         for inputs in [
             BasicProgramIo::empty(),
