@@ -341,4 +341,26 @@ mod tests {
             zkvm.prove(&inputs).unwrap_err();
         }
     }
+
+    #[test]
+    fn test_aligned_allocs() {
+        let program = RV32_IM_RISC0_ZKVM_ELF
+            .compile(&testing_guest_directory("risc0", "allocs_alignment"))
+            .unwrap();
+
+        for i in 1..=16_usize {
+            let zkvm = EreRisc0::new(program.clone(), ProverResourceType::Cpu).unwrap();
+
+            let mut input = Input::new();
+            input.write(i);
+
+            if i.is_power_of_two() {
+                zkvm.execute(&input)
+                    .expect("Power of two alignment should execute successfully");
+            } else {
+                zkvm.execute(&input)
+                    .expect_err("Non-power of two aligment is expected to fail");
+            }
+        }
+    }
 }
