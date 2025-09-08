@@ -96,6 +96,7 @@ pub enum ErezkVM {
     Pico,
     Risc0,
     SP1,
+    Ziren,
     Zisk,
 }
 
@@ -108,6 +109,7 @@ impl ErezkVM {
             Self::Pico => "pico",
             Self::Risc0 => "risc0",
             Self::SP1 => "sp1",
+            Self::Ziren => "ziren",
             Self::Zisk => "zisk",
         }
     }
@@ -203,6 +205,7 @@ impl FromStr for ErezkVM {
             "pico" => Self::Pico,
             "risc0" => Self::Risc0,
             "sp1" => Self::SP1,
+            "ziren" => Self::Ziren,
             "zisk" => Self::Zisk,
             _ => return Err(format!("Unsupported zkvm {s}")),
         })
@@ -577,6 +580,23 @@ mod test {
     #[test]
     fn dockerized_sp1() {
         let zkvm = ErezkVM::SP1;
+
+        let guest_directory = testing_guest_directory(zkvm.as_str(), "basic");
+        let program = EreDockerizedCompiler::new(zkvm, workspace_dir())
+            .unwrap()
+            .compile(&guest_directory)
+            .unwrap();
+
+        let zkvm = EreDockerizedzkVM::new(zkvm, program, ProverResourceType::Cpu).unwrap();
+
+        let io = BasicProgramIo::valid();
+        run_zkvm_execute(&zkvm, &io);
+        run_zkvm_prove(&zkvm, &io);
+    }
+
+    #[test]
+    fn dockerized_ziren() {
+        let zkvm = ErezkVM::Ziren;
 
         let guest_directory = testing_guest_directory(zkvm.as_str(), "basic");
         let program = EreDockerizedCompiler::new(zkvm, workspace_dir())

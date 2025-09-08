@@ -41,6 +41,9 @@ impl ErezkVM {
             Self::SP1 => bincode::serialize(obj).map_err(|err| {
                 CommonError::serilization(err, "Failed to serialize object with `bincode`")
             }),
+            Self::Ziren => bincode::serialize(obj).map_err(|err| {
+                CommonError::serilization(err, "Failed to serialize object with `bincode`")
+            }),
             Self::Zisk => bincode::serialize(obj).map_err(|err| {
                 CommonError::serilization(err, "Failed to serialize object with `bincode`")
             }),
