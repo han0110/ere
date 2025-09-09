@@ -237,7 +237,6 @@ jobs:
 
   test_ere_dockerized:
     name: Test ere-dockerized with the selected zkVM
-    if: ${{ inputs.test_ere_dockerized }}
     needs: build_image
     runs-on: ubuntu-latest
     steps:
@@ -277,6 +276,7 @@ jobs:
             CI=1
 
       - name: Pull images ere-base, ere-base-${{ inputs.zkvm }}, and ere-cli-${{ inputs.zkvm }}
+        if: ${{ inputs.test_ere_dockerized }}
         run: |
           docker image pull ${{ needs.build_image.outputs.base_image_tag }}
           docker image pull ${{ needs.build_image.outputs.base_zkvm_image_tag }}
@@ -286,4 +286,5 @@ jobs:
           docker image tag ${{ needs.build_image.outputs.cli_zkvm_image_tag }} ere-cli-${{ inputs.zkvm }}:${{ needs.build_image.outputs.image_version }}
 
       - name: Run cargo test for ere-${{ inputs.zkvm }} via ere-dockerized
+        if: ${{ inputs.test_ere_dockerized }}
         run: cargo test --release --package ere-dockerized -- ${{ inputs.zkvm }}
