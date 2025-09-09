@@ -100,7 +100,7 @@ jobs:
               fi
             fi
 
-            if [ "${{ steps.changed_files.outputs.base_zkvm_any_changed }}" == "false" ]; then
+            if [ "${{ steps.changed_files.outputs.any_changed }}" == "false" ]; then
               if docker buildx imagetools create --tag "$BASE_ZKVM_IMAGE_TAG" "$BASE_ZKVM_IMAGE_NAME:$PR_BASE_IMAGE_VERSION" 2>/dev/null; then
                 echo "Created new tag $BASE_ZKVM_IMAGE_TAG referring to $BASE_ZKVM_IMAGE_NAME:$PR_BASE_IMAGE_VERSION"
                 BUILD_BASE_ZKVM_IMAGE="false"
