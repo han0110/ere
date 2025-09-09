@@ -100,7 +100,7 @@ jobs:
               fi
             fi
 
-            if [ "${{ steps.changed_files.outputs.base_zkvm_any_changed }}" == "false" ]; then
+            if [ "${{ steps.changed_files.outputs.any_changed }}" == "false" ]; then
               if docker buildx imagetools create --tag "$BASE_ZKVM_IMAGE_TAG" "$BASE_ZKVM_IMAGE_NAME:$PR_BASE_IMAGE_VERSION" 2>/dev/null; then
                 echo "Created new tag $BASE_ZKVM_IMAGE_TAG referring to $BASE_ZKVM_IMAGE_NAME:$PR_BASE_IMAGE_VERSION"
                 BUILD_BASE_ZKVM_IMAGE="false"
@@ -237,7 +237,6 @@ jobs:
 
   test_ere_dockerized:
     name: Test ere-dockerized with the selected zkVM
-    if: ${{ inputs.test_ere_dockerized }}
     needs: build_image
     runs-on: ubuntu-latest
     steps:
@@ -274,9 +273,11 @@ jobs:
           build-args: |
             BASE_ZKVM_IMAGE_TAG=${{ needs.build_image.outputs.base_zkvm_image_tag }}
             ZKVM=${{ inputs.zkvm }}
+            RUSTFLAGS=
             CI=1
 
       - name: Pull images ere-base, ere-base-${{ inputs.zkvm }}, and ere-cli-${{ inputs.zkvm }}
+        if: ${{ inputs.test_ere_dockerized }}
         run: |
           docker image pull ${{ needs.build_image.outputs.base_image_tag }}
           docker image pull ${{ needs.build_image.outputs.base_zkvm_image_tag }}
@@ -286,4 +287,5 @@ jobs:
           docker image tag ${{ needs.build_image.outputs.cli_zkvm_image_tag }} ere-cli-${{ inputs.zkvm }}:${{ needs.build_image.outputs.image_version }}
 
       - name: Run cargo test for ere-${{ inputs.zkvm }} via ere-dockerized
+        if: ${{ inputs.test_ere_dockerized }}
         run: cargo test --release --package ere-dockerized -- ${{ inputs.zkvm }}
