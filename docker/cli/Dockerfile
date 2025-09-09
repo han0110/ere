@@ -7,7 +7,7 @@ COPY . /ere
 WORKDIR /ere
 
 ARG ZKVM
-ARG RUSTFLAGS="-Ctarget-cpu=native"
+ARG RUSTFLAGS
 
 # If current environment is in CI or not.
 ARG CI
