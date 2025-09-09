@@ -41,3 +41,5 @@ RUN /tmp/install_openvm_sdk.sh && rm /tmp/install_openvm_sdk.sh
 RUN cargo openvm --version
 
 CMD ["/bin/bash"]
+
+# touch

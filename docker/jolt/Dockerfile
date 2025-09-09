@@ -22,3 +22,5 @@ RUN /tmp/install_jolt_sdk.sh && rm /tmp/install_jolt_sdk.sh # Clean up the scrip
 RUN jolt --version
 
 CMD ["/bin/bash"]
+
+# touch

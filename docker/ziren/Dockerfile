@@ -29,3 +29,5 @@ RUN /tmp/install_ziren_sdk.sh && rm /tmp/install_ziren_sdk.sh
 RUN echo "Verifying Ziren installation in Dockerfile ..." && cargo ziren --version
 
 CMD ["/bin/bash"]
+
+# touch

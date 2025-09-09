@@ -72,3 +72,5 @@ ENV PATH="${PATH}:${ZISK_BIN_DIR}"
 RUN echo "Verifying ZisK installation in Dockerfile ..." && cargo-zisk --version
 
 CMD ["/bin/bash"]
+
+# touch

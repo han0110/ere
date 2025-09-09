@@ -25,3 +25,5 @@ RUN rustup default "$NEXUS_TOOLCHAIN_VERSION"
 RUN echo "Verifying Nexus installation in Dockerfile (post-script)..." && cargo-nexus --version
 
 CMD ["/bin/bash"]
+
+# touch

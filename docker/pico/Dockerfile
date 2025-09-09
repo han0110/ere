@@ -30,3 +30,5 @@ RUN rustup default "$PICO_TOOLCHAIN_VERSION"
 RUN echo "Verifying Pico installation in Dockerfile (post-script)..." && cargo pico --version
 
 CMD ["/bin/bash"]
+
+# touch

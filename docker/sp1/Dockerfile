@@ -33,3 +33,5 @@ CMD ["/bin/bash"]
 
 # TODO:  Maybe we use root to install it in ere_user and then switch back to ere_user for security
 # USER ${USERNAME} # Switch to non-root user again
+
+# touch

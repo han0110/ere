@@ -49,3 +49,5 @@ RUN /tmp/install_risc0_sdk.sh && rm /tmp/install_risc0_sdk.sh
 RUN echo "Verifying Risc0 installation in Dockerfile (post-script)..." && cargo risczero --version
 
 CMD ["/bin/bash"]
+
+# touch
