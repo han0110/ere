@@ -9,9 +9,8 @@ license.workspace = true
 bincode.workspace = true
 blake3.workspace = true
 bytemuck.workspace = true
-dashmap.workspace = true
 serde = { workspace = true, features = ["derive"] }
-serde_json.workspace = true
+strum = { workspace = true, features = ["derive"] }
 tempfile.workspace = true
 thiserror.workspace = true
 toml.workspace = true
