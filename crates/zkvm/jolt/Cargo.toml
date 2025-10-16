@@ -1,0 +1,29 @@
+[package]
+name = "ere-jolt"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+
+# Jolt dependencies
+ark-serialize = { workspace = true, features = ["derive"] }
+common.workspace = true
+jolt = { workspace = true, features = ["host"] }
+
+# Local dependencies
+ere-compile-utils.workspace = true
+ere-zkvm-interface.workspace = true
+
+[dev-dependencies]
+ere-test-utils = { workspace = true, features = ["host"] }
+
+[build-dependencies]
+ere-build-utils.workspace = true
+
+[lints]
+workspace = true

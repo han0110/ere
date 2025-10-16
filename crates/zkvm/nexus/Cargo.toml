@@ -1,0 +1,29 @@
+[package]
+name = "ere-nexus"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+bincode.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+# Nexus dependencies
+nexus-sdk.workspace = true
+
+# Local dependencies
+ere-compile-utils.workspace = true
+ere-zkvm-interface.workspace = true
+
+[dev-dependencies]
+ere-test-utils = { workspace = true, features = ["host"] }
+
+[build-dependencies]
+ere-build-utils.workspace = true
+
+
+[lints]
+workspace = true

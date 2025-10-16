@@ -1,0 +1,27 @@
+[package]
+name = "ere-zisk"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+bincode.workspace = true
+blake3.workspace = true
+bytemuck.workspace = true
+serde = { workspace = true, features = ["derive"] }
+strum = { workspace = true, features = ["derive"] }
+tempfile.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+# Local dependencies
+ere-compile-utils.workspace = true
+ere-zkvm-interface.workspace = true
+
+[dev-dependencies]
+# Local dependencies
+ere-test-utils = { workspace = true, features = ["host"] }
+
+[build-dependencies]
+ere-build-utils.workspace = true

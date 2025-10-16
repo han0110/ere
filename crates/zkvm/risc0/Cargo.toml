@@ -1,0 +1,35 @@
+[package]
+name = "ere-risc0"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+borsh.workspace = true
+bytemuck.workspace = true
+serde = { workspace = true, features = ["derive", "rc"] }
+thiserror.workspace = true
+tracing.workspace = true
+
+# Risc0 dependencies
+risc0-build = { workspace = true, features = ["unstable"] }
+risc0-zkvm = { workspace = true, features = ["client", "unstable"] }
+risc0-binfmt.workspace = true
+
+# Local dependencies
+ere-compile-utils.workspace = true
+ere-zkvm-interface.workspace = true
+
+[dev-dependencies]
+ere-test-utils = { workspace = true, features = ["host"] }
+
+[build-dependencies]
+ere-build-utils.workspace = true
+
+[features]
+metal = ["risc0-zkvm/metal"]
+
+[lints]
+workspace = true
