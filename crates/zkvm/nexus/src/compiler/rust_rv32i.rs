@@ -2,10 +2,19 @@ use crate::{
     compiler::NexusProgram,
     error::{CompileError, NexusError},
 };
-use ere_compile_utils::cargo_metadata;
+use ere_compile_utils::CargoBuildCmd;
 use ere_zkvm_interface::Compiler;
-use nexus_sdk::compile::{Compile, Compiler as NexusCompiler, cargo::CargoPackager};
-use std::{fs, path::Path};
+use std::path::Path;
+
+const TARGET_TRIPLE: &str = "riscv32i-unknown-none-elf";
+// Linker script from nexus-sdk
+// https://github.com/nexus-xyz/nexus-zkvm/blob/v0.3.4/sdk/src/compile/linker-scripts/default.x
+const LINKER_SCRIPT: &str = include_str!("rust_rv32i/linker.x");
+const RUSTFLAGS: &[&str] = &["-C", "relocation-model=pic", "-C", "panic=abort"];
+const CARGO_BUILD_OPTIONS: &[&str] = &[
+    // For bare metal we have to build core and alloc
+    "-Zbuild-std=core,alloc",
+];
 
 /// Compiler for Rust guest program to RV32I architecture.
 pub struct RustRv32i;
@@ -15,23 +24,16 @@ impl Compiler for RustRv32i {
 
     type Program = NexusProgram;
 
-    fn compile(&self, guest_path: &Path) -> Result<Self::Program, Self::Error> {
-        // 1. Check guest path
-        if !guest_path.exists() {
-            return Err(CompileError::PathNotFound(guest_path.to_path_buf()))?;
-        }
-        std::env::set_current_dir(guest_path).map_err(|e| CompileError::Client(e.into()))?;
-
-        let metadata = cargo_metadata(guest_path).map_err(CompileError::CompileUtilError)?;
-        let package_name = &metadata.root_package().unwrap().name;
-
-        let mut prover_compiler = NexusCompiler::<CargoPackager>::new(package_name);
-        let elf_path = prover_compiler
-            .build()
-            .map_err(|e| CompileError::Client(e.into()))?;
-
-        let elf = fs::read(&elf_path).map_err(|_| CompileError::ElfNotFound(elf_path))?;
-
+    fn compile(&self, guest_directory: &Path) -> Result<Self::Program, Self::Error> {
+        let elf = CargoBuildCmd::new()
+            .linker_script(Some(LINKER_SCRIPT))
+            // The compiled ELF will be incompatible with Nexus VM if we don't pin this version
+            // https://github.com/nexus-xyz/nexus-zkvm/blob/main/rust-toolchain.toml
+            .toolchain("nightly-2025-04-06")
+            .build_options(CARGO_BUILD_OPTIONS)
+            .rustflags(RUSTFLAGS)
+            .exec(guest_directory, TARGET_TRIPLE)
+            .map_err(CompileError::CompileUtilError)?;
         Ok(elf)
     }
 }
