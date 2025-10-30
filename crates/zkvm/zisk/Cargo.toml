@@ -9,18 +9,26 @@ license.workspace = true
 anyhow.workspace = true
 blake3.workspace = true
 bytemuck.workspace = true
+serde.workspace = true
 strum = { workspace = true, features = ["derive"] }
 tempfile.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
 
 # Local dependencies
-ere-compile-utils.workspace = true
+ere-compile-utils = { workspace = true, optional = true }
 ere-zkvm-interface.workspace = true
 
 [dev-dependencies]
-# Local dependencies
 ere-test-utils = { workspace = true, features = ["host"] }
 
 [build-dependencies]
 ere-build-utils.workspace = true
+
+[features]
+default = ["compiler", "zkvm"]
+compiler = ["dep:ere-compile-utils"]
+zkvm = []
+
+[lints]
+workspace = true

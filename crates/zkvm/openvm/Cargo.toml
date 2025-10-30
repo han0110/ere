@@ -21,7 +21,7 @@ openvm-stark-sdk.workspace = true
 openvm-transpiler.workspace = true
 
 # Local dependencies
-ere-compile-utils.workspace = true
+ere-compile-utils = { workspace = true, optional = true }
 ere-zkvm-interface.workspace = true
 
 [dev-dependencies]
@@ -31,7 +31,9 @@ ere-test-utils = { workspace = true, features = ["host"] }
 ere-build-utils.workspace = true
 
 [features]
-default = []
+default = ["compiler", "zkvm"]
+compiler = ["dep:ere-compile-utils"]
+zkvm = []
 cuda = ["openvm-sdk/cuda"]
 
 [lints]
