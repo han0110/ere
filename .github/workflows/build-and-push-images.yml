@@ -1,9 +1,14 @@
 name: Build and push images
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches:
       - master
+      - han/feature/cuda-enabled-docker-image-test
     tags:
       - 'v*'
 
@@ -27,7 +32,7 @@ jobs:
 
   build_and_push:
     name: Build and push docker image (${{ matrix.zkvm }})
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/han/feature/cuda-enabled-docker-image-test'
     needs: image_meta
     runs-on: ubuntu-latest
     permissions:
@@ -89,7 +94,7 @@ jobs:
 
   build_and_push_cuda:
     name: Build and push CUDA docker image (${{ matrix.zkvm }})
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/han/feature/cuda-enabled-docker-image-test'
     needs: image_meta
     runs-on: ubuntu-latest
     permissions:
@@ -146,7 +151,7 @@ jobs:
 
   build_and_push_cluster:
     name: Build and push cluster docker image (${{ matrix.zkvm }})
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/han/feature/cuda-enabled-docker-image-test'
     needs: image_meta
     runs-on: ubuntu-latest
     permissions:
