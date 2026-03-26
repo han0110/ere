@@ -1,0 +1,68 @@
+name: Release PR
+
+permissions:
+  pull-requests: write
+  contents: write
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@git-cliff
+
+      - name: Determine next version
+        id: version
+        run: |
+          NEXT=$(git cliff --bumped-version | sed 's/^v//')
+          CURRENT=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml)
+          if [ -z "$NEXT" ]; then
+            echo "::error::git-cliff returned empty version"
+            exit 1
+          fi
+          if [ "$NEXT" = "$CURRENT" ]; then
+            echo "::error::No version bump needed ($CURRENT)"
+            exit 1
+          fi
+          echo "next=$NEXT" >> $GITHUB_OUTPUT
+          echo "current=$CURRENT" >> $GITHUB_OUTPUT
+
+      - name: Update version and changelog
+        run: |
+          VERSION="${{ steps.version.outputs.next }}"
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
+          git cliff --tag "v$VERSION" -o CHANGELOG.md
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Sync lockfile
+        run: cargo fetch
+
+      - name: Create release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.next }}"
+          CURRENT="${{ steps.version.outputs.current }}"
+          BRANCH="release-v$VERSION"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add Cargo.toml Cargo.lock CHANGELOG.md
+          git commit -m "chore: release v$VERSION"
+          git push -f origin "$BRANCH"
+
+          if ! gh pr list --head "$BRANCH" --state open --json number -q '.[0].number' | grep -q .; then
+            gh pr create --base master --head "$BRANCH" \
+              --title "chore: release v$VERSION" \
+              --body "Bump version $CURRENT -> $VERSION"
+          fi
