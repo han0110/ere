@@ -1,0 +1,22 @@
+name: Release
+
+permissions:
+  contents: write
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+jobs:
+  tag:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create and push tag
+        run: |
+          VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml)
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
