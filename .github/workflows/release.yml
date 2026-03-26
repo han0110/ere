@@ -1,0 +1,26 @@
+name: Release
+
+permissions:
+  contents: write
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release-plz-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: cargo-bins/cargo-binstall@main
+      - name: Install release-plz
+        run: cargo binstall -y release-plz
+      - name: Create tag and GitHub Release
+        run: release-plz release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
