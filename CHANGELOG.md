@@ -1,8 +1,17 @@
+## [0.8.0] - 2026-03-26
+
+### 🚀 Features
+
+- Test ci (#28)
 ## [0.7.0] - 2026-03-26
 
 ### 🚀 Features
 
 - Update zisk to 0.17.0 (test)
+
+### ⚙️ Miscellaneous Tasks
+
+- Release v0.7.0 (#27)
 ## [0.6.0] - 2026-03-26
 
 ### 🚀 Features
