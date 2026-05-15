@@ -1,0 +1,37 @@
+name: test-bindings
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    paths:
+      - "bindings/**"
+      - "crates/verifier/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/test-bindings.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bindings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nightly Rust
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Cache Cargo registry + target
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+
+      - name: Run binding tests
+        run: bash bindings/scripts/test_all.sh

@@ -1,0 +1,16 @@
+[package]
+name = "ere-binding-c"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+ere-verifier = { workspace = true, features = ["nightly"] }
+
+[build-dependencies]
+cbindgen = "0.28.0"

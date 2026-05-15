@@ -1,0 +1,3 @@
+# Per-binding build/ directories receive cbindgen-generated headers and
+# staged artifacts from bindings/scripts/compile.sh.
+**/build/

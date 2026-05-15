@@ -45,6 +45,8 @@ members = [
     "crates/util/compile",
     "crates/util/test",
     "crates/util/tokio",
+    # Verifier bindings
+    "bindings/c",
 ]
 resolver = "2"
 
