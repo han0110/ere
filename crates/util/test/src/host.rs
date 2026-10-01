@@ -2,7 +2,7 @@ use core::{marker::PhantomData, ops::Deref};
 use std::{env, fs, path::PathBuf};
 
 use ere_codec::{Decode, Encode};
-use ere_prover_core::{Elf, Input, PublicValues, zkVMProver};
+use ere_prover_core::{CostProfile, Elf, Input, PublicValues, zkVMProver};
 use sha2::{Digest, Sha256};
 
 use crate::{
@@ -45,14 +45,71 @@ pub fn run_zkvm_execute_estimated_cost(
         .expect("execute_estimated_cost should not fail with valid input");
 
     assert!(!estimation.cost.is_empty(), "cost must not be empty");
-    assert!(
-        estimation.peak_heap_bytes.is_some(),
-        "peak heap must be known"
-    );
 
     test_case.assert_output(&public_values);
 
     public_values
+}
+
+pub fn run_zkvm_profile(zkvm: &impl zkVMProver, test_case: &impl TestCase) -> CostProfile {
+    let profile = zkvm
+        .profile(&test_case.input())
+        .expect("profile should not fail with valid input");
+    let (public_values, estimation) = zkvm
+        .execute_estimated_cost(&test_case.input())
+        .expect("execute_estimated_cost should not fail with valid input");
+
+    assert_eq!(
+        profile.cost_estimation(),
+        estimation,
+        "profile must split the estimated cost"
+    );
+    assert!(
+        profile_stacks(&profile)
+            .iter()
+            .any(|(frames, _)| frames.contains(&"main")),
+        "a stack must hold the guest `main`"
+    );
+    assert!(profile.peak_stack_bytes > 0, "peak stack must not be zero");
+    assert!(profile.peak_heap_bytes > 0, "peak heap must not be zero");
+
+    test_case.assert_output(&public_values);
+
+    profile
+}
+
+/// Profiles the Sha256 test case of the zkVM-accelerator program, and checks that a stack holds
+/// `zkvm_sha256` below `main`.
+pub fn run_zkvm_profile_zkvm_interface(zkvm: &impl zkVMProver) {
+    let test_case = zkvm_interface::test_cases()
+        .into_iter()
+        .find(|test_case| test_case.0[0].accelerator == Accelerator::Sha256)
+        .unwrap();
+    let profile = run_zkvm_profile(zkvm, &test_case);
+    assert!(profile_stacks(&profile).iter().any(|(frames, _)| {
+        frames
+            .iter()
+            .skip_while(|frame| **frame != "main")
+            .any(|frame| *frame == "zkvm_sha256")
+    }));
+}
+
+/// Frames from the root, and the total cost, of each stack in `profile`.
+pub fn profile_stacks(profile: &CostProfile) -> Vec<(Vec<&str>, u64)> {
+    let pprof = &profile.pprof;
+    let frame = |location_id: &u64| {
+        let function_id = pprof.location[*location_id as usize - 1].line[0].function_id;
+        let name = pprof.function[function_id as usize - 1].name;
+        pprof.string_table[name as usize].as_str()
+    };
+    pprof
+        .sample
+        .iter()
+        .map(|sample| {
+            let frames = sample.location_id.iter().rev().map(frame).collect();
+            (frames, *sample.value.last().unwrap() as u64)
+        })
+        .collect()
 }
 
 pub fn run_zkvm_prove(zkvm: &impl zkVMProver, test_case: &impl TestCase) -> PublicValues {

@@ -3,18 +3,20 @@
 mod cost;
 mod error;
 mod input;
+#[rustfmt::skip]
+pub mod pprof;
 mod prover;
 mod resource;
+
+#[cfg(test)]
+mod test;
 
 pub use ere_codec as codec;
 pub use ere_compiler_core::Elf;
 pub use ere_verifier_core::{PublicValues, zkVMVerifier};
 
 pub use crate::{
-    cost::{
-        CostEstimation, ERE_COST_ESTIMATION_HEAP_END, ERE_COST_ESTIMATION_HEAP_START,
-        symbol_address,
-    },
+    cost::{CallTree, CostEstimation, CostProfile, PeakMemory, StackPointerWrite, Transfer},
     error::CommonError,
     input::Input,
     prover::{ProgramVk, Proof, zkVMProver},
