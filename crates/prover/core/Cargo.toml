@@ -25,7 +25,8 @@ ere-verifier-core.workspace = true
 
 [dev-dependencies]
 bincode = { workspace = true, features = ["alloc", "serde"] }
-prost-build.workspace = true
+# `tonic-prost-build` turns `cleanup-markdown` on when CI builds the common crates together.
+prost-build = { workspace = true, features = ["cleanup-markdown"] }
 serde_json.workspace = true
 serde_yaml.workspace = true
 tempfile.workspace = true
