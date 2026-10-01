@@ -95,8 +95,17 @@ impl zkVMProver for SP1Prover {
         self.estimator().estimate(input.stdin())
     }
 
-    fn profile(&self, _input: &Input) -> Result<CostProfile, Error> {
-        unimplemented!()
+    fn profile(&self, input: &Input) -> Result<CostProfile, Error> {
+        // The gas estimator reads stdin only, so it cannot price a proofs stream.
+        if input.proofs.is_some() {
+            Err(CommonError::unsupported_input("no dedicated proofs stream"))?
+        }
+        // The profiler copies only the supervisor-mode step, and untrusted programs need user mode.
+        if self.program.enable_untrusted_programs {
+            Err(Error::ProfileUntrustedPrograms)?
+        }
+
+        self.estimator().profile(input.stdin(), &self.elf)
     }
 
     fn prove(&self, input: &Input) -> Result<(PublicValues, SP1Proof, Duration), Error> {
@@ -141,8 +150,9 @@ mod tests {
     use ere_util_test::{
         codec::BincodeLegacy,
         host::{
-            TestCase, run_zkvm_execute, run_zkvm_execute_estimated_cost, run_zkvm_prove,
-            run_zkvm_switchable, testing_guest_directory,
+            TestCase, profile_stacks, run_zkvm_execute, run_zkvm_execute_estimated_cost,
+            run_zkvm_profile, run_zkvm_profile_zkvm_interface, run_zkvm_prove, run_zkvm_switchable,
+            testing_guest_directory,
         },
         program::{basic::BasicProgram, zkvm_interface},
     };
@@ -217,6 +227,55 @@ mod tests {
         let zkvm = with_basic_elf(zkvm(false));
         let test_case = BasicProgram::<BincodeLegacy>::valid_test_case();
         run_zkvm_execute_estimated_cost(&*zkvm, &test_case);
+    }
+
+    #[test]
+    fn test_profile() {
+        let zkvm = with_basic_elf(zkvm(false));
+        let test_case = BasicProgram::<BincodeLegacy>::valid_test_case();
+        run_zkvm_profile(&*zkvm, &test_case);
+    }
+
+    #[test]
+    fn test_profile_invalid_test_case() {
+        let zkvm = with_basic_elf(zkvm(false));
+        for input in [
+            Input::new(),
+            BasicProgram::<BincodeLegacy>::invalid_test_case().input(),
+        ] {
+            zkvm.profile(&input).unwrap_err();
+        }
+
+        // Should be able to recover
+        let test_case = BasicProgram::<BincodeLegacy>::valid_test_case();
+        run_zkvm_profile(&*zkvm, &test_case);
+    }
+
+    #[test]
+    fn test_profile_zkvm_interface() {
+        let zkvm = with_zkvm_interface(zkvm(false));
+        run_zkvm_profile_zkvm_interface(&*zkvm);
+    }
+
+    #[test]
+    fn test_profile_elf_without_function_symbols() {
+        let zkvm = with_basic_elf(zkvm(false));
+        // Zeroes `e_shoff`, `e_shnum` and `e_shstrndx` to remove the section headers and symbols.
+        let mut elf = basic_elf().0;
+        elf[0x28..0x30].fill(0);
+        elf[0x3c..0x40].fill(0);
+        let test_case = BasicProgram::<BincodeLegacy>::valid_test_case();
+        let profile = zkvm
+            .estimator()
+            .profile(test_case.input().stdin(), &elf)
+            .unwrap();
+        // Every frame is `[unknown]`, and the peaks need no symbols.
+        assert!(
+            profile_stacks(&profile)
+                .iter()
+                .all(|(frames, _)| frames.iter().all(|frame| *frame == "[unknown]"))
+        );
+        assert!(profile.peak_stack_bytes > 0 && profile.peak_heap_bytes > 0);
     }
 
     #[test]
