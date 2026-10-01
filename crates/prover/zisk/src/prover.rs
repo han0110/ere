@@ -54,8 +54,12 @@ impl zkVMProver for ZiskProver {
         self.sdk.execute_estimated_cost(input)
     }
 
-    fn profile(&self, _input: &Input) -> Result<CostProfile, Error> {
-        unimplemented!()
+    fn profile(&self, input: &Input) -> Result<CostProfile, Error> {
+        if input.proofs.is_some() {
+            Err(CommonError::unsupported_input("no dedicated proofs stream"))?
+        }
+
+        self.sdk.profile(input)
     }
 
     fn prove(&self, input: &Input) -> Result<(PublicValues, ZiskProof, Duration), Error> {
@@ -79,11 +83,13 @@ pub(crate) mod tests {
     use ere_util_test::{
         codec::BincodeLegacy,
         host::{
-            TestCase, run_zkvm_execute, run_zkvm_execute_estimated_cost, run_zkvm_prove,
-            run_zkvm_switchable, testing_guest_directory,
+            TestCase, profile_stacks, run_zkvm_execute, run_zkvm_execute_estimated_cost,
+            run_zkvm_profile, run_zkvm_profile_zkvm_interface, run_zkvm_prove, run_zkvm_switchable,
+            testing_guest_directory,
         },
         program::{basic::BasicProgram, zkvm_interface},
     };
+    use zisk_core::STACK_SIZE;
 
     use crate::prover::ZiskProver;
 
@@ -154,6 +160,47 @@ pub(crate) mod tests {
         let zkvm = with_basic_elf(zkvm());
         let test_case = BasicProgram::<BincodeLegacy>::valid_test_case();
         run_zkvm_execute_estimated_cost(&*zkvm, &test_case);
+    }
+
+    #[test]
+    fn test_profile() {
+        let zkvm = with_basic_elf(zkvm());
+        let test_case = BasicProgram::<BincodeLegacy>::valid_test_case();
+        let profile = run_zkvm_profile(&*zkvm, &test_case);
+        let (_, estimation) = zkvm.execute_estimated_cost(&test_case.input()).unwrap();
+        let stacks = profile_stacks(&profile);
+        let root = |name| {
+            stacks
+                .iter()
+                .find(|(frames, _)| frames == &[name])
+                .unwrap()
+                .1
+        };
+        assert_eq!(root("[base]"), estimation.cost["base"]);
+        // The ROM and RAM init is a part of the `memory` component.
+        assert!(root("[init]") < estimation.cost["memory"]);
+        assert!(profile.peak_stack_bytes < STACK_SIZE);
+    }
+
+    #[test]
+    fn test_profile_invalid_test_case() {
+        let zkvm = with_basic_elf(zkvm());
+        for input in [
+            Input::new(),
+            BasicProgram::<BincodeLegacy>::invalid_test_case().input(),
+        ] {
+            zkvm.profile(&input).unwrap_err();
+        }
+
+        // Should be able to recover
+        let test_case = BasicProgram::<BincodeLegacy>::valid_test_case();
+        run_zkvm_profile(&*zkvm, &test_case);
+    }
+
+    #[test]
+    fn test_profile_zkvm_interface() {
+        let zkvm = with_zkvm_interface(zkvm());
+        run_zkvm_profile_zkvm_interface(&*zkvm);
     }
 
     #[test]

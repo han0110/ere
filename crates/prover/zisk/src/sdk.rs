@@ -8,17 +8,23 @@ use std::{
 use ere_cluster_client_zisk::ZiskClusterClient;
 use ere_compiler_core::Elf;
 use ere_prover_core::{
-    CommonError, CostEstimation, Input, ProverResource, ProverResourceKind, PublicValues,
+    CallTree, CommonError, CostEstimation, CostProfile, Input, PeakMemory, ProverResource,
+    ProverResourceKind, PublicValues, Transfer,
 };
 use ere_util_tokio::block_on;
 use ere_verifier_zisk::{ZiskProgramVk, ZiskProof, ensure_program_vk_matches};
 use tokio::time::Instant;
 use zisk_common::EmuTrace;
-use zisk_core::{INPUT_ADDR, ZiskRom};
+use zisk_core::{INPUT_ADDR, RAM_ADDR, RAM_SIZE, ROM_ENTRY, ZiskRom};
 use zisk_transpiler_riscv::Riscv2zisk;
 use ziskemu::{Emu, EmuOptions};
 
-use crate::{cost, error::Error, executor::ZiskExecutor, sdk::local::LocalProver};
+use crate::{
+    cost::{self, COMPONENTS},
+    error::Error,
+    executor::ZiskExecutor,
+    sdk::local::LocalProver,
+};
 
 mod local;
 mod proving_key;
@@ -51,6 +57,7 @@ pub struct ZiskSdk {
     backend: Backend,
     rom: ZiskRom,
     executor: ZiskExecutor,
+    elf: Elf,
 }
 
 impl ZiskSdk {
@@ -62,10 +69,10 @@ impl ZiskSdk {
         // Initialize prover
         let backend = match &resource {
             ProverResource::Cpu | ProverResource::Gpu => {
-                Backend::Local(LocalProver::new(elf, &resource)?)
+                Backend::Local(LocalProver::new(elf.clone(), &resource)?)
             }
             ProverResource::Cluster(config) => {
-                let client = block_on(ZiskClusterClient::new(config, elf))?;
+                let client = block_on(ZiskClusterClient::new(config, elf.clone()))?;
                 let prove_timeout = Duration::from_secs(
                     env::var("ERE_ZISK_CLUSTER_PROVE_TIMEOUT_SECS")
                         .ok()
@@ -95,6 +102,7 @@ impl ZiskSdk {
             backend,
             rom,
             executor,
+            elf,
         })
     }
 
@@ -104,17 +112,18 @@ impl ZiskSdk {
         let executor = ZiskExecutor::new(&elf, &rom);
 
         match &mut self.backend {
-            Backend::Local(local) => local.setup(elf)?,
+            Backend::Local(local) => local.setup(elf.clone())?,
             Backend::Cluster { client, .. } => {
                 let ProverResource::Cluster(config) = &self.resource else {
                     unreachable!("a cluster backend runs on a cluster resource")
                 };
-                *client = block_on(ZiskClusterClient::new(config, elf))?;
+                *client = block_on(ZiskClusterClient::new(config, elf.clone()))?;
             }
         }
 
         self.rom = rom;
         self.executor = executor;
+        self.elf = elf;
         Ok(())
     }
 
@@ -136,6 +145,71 @@ impl ZiskSdk {
         &self,
         input: &Input,
     ) -> Result<(PublicValues, CostEstimation), Error> {
+        let (emu, report) = self.run_with_stats(input, |_, _| {})?;
+        let cost = cost::parse(&report)?;
+        let public_values = emu.get_output_8();
+
+        Ok((public_values.as_slice().into(), CostEstimation { cost }))
+    }
+
+    /// Splits the cost of [`Self::execute_estimated_cost`] over the guest call stacks, and measures
+    /// the peak memory use.
+    pub fn profile(&self, input: &Input) -> Result<CostProfile, Error> {
+        let mut call_tree = CallTree::new(
+            &self.elf,
+            ROM_ENTRY,
+            &COMPONENTS.map(|(component, _)| component),
+        )?;
+        let mut memory = PeakMemory::new(RAM_ADDR..RAM_ADDR + RAM_SIZE);
+        let (emu, report) = self.run_with_stats(input, |emu, pc| {
+            let instruction = emu.rom.get_instruction(pc);
+            let context = &emu.ctx.inst_ctx;
+            let transfer = instruction
+                .meta_rd
+                .and_then(|rd| Transfer::of_jump(rd, instruction.meta_rs1?));
+            // An odd PC is an internal instruction of the RISC-V instruction that runs.
+            // https://github.com/0xPolygonHermez/zisk/blob/v1.3.0-alpha/core/src/zisk_rom.rs#L545-L563
+            if transfer.is_some() || (context.pc % 2 == 0 && !call_tree.contains(context.pc)) {
+                call_tree.charge(&cost::running(emu.ctx.stats.get_costs()));
+                // A call writes its return address to `rd`, 8 bytes past a fused `auipc`.
+                // https://github.com/0xPolygonHermez/zisk/blob/v1.3.0-alpha/transpilers/riscv/src/riscv2zisk_context.rs#L1261-L1285
+                let link = instruction
+                    .meta_rd
+                    .map_or(0, |rd| context.regs[rd as usize]);
+                call_tree.transfer(transfer, context.pc, link, context.regs[2]);
+            }
+            cost::record_accesses(&mut memory, instruction, context);
+            memory.stack_pointer(context.regs[2], cost::stack_pointer_write(instruction));
+        })?;
+
+        // The report adds `base` and the ROM and RAM init in `memory` to what the steps spend.
+        let stepped = cost::running(emu.ctx.stats.get_costs());
+        call_tree.charge(&stepped);
+        let report = cost::parse(&report)?;
+        let total = COMPONENTS.map(|(component, _)| report[component]);
+        for (((component, _), total), stepped) in COMPONENTS.iter().zip(total).zip(stepped) {
+            assert!(
+                total == stepped || (total > stepped && matches!(*component, "base" | "memory")),
+                "the steps spend {stepped} {component} cells, the report {total}"
+            );
+        }
+        let mut with_base = stepped;
+        with_base[0] = total[0];
+        call_tree.charge_root("[base]", &with_base);
+        call_tree.charge_root("[init]", &total);
+
+        Ok(call_tree.into_profile("cells", &memory))
+    }
+
+    /// Runs `input` on the Rust emulator with statistics, and returns the emulator and its report.
+    /// It steps the emulator as `Emu::run` does, and calls `on_step` after each step with the
+    /// emulator and the PC of the step.
+    /// https://github.com/0xPolygonHermez/zisk/blob/v1.3.0-alpha/emulator/src/emu.rs#L1672-L2092
+    fn run_with_stats(
+        &self,
+        input: &Input,
+        mut on_step: impl FnMut(&Emu<'_>, u64),
+    ) -> Result<(Emu<'_>, String), Error> {
         ensure_stdin_fits(input)?;
         let stdin = framed_stdin(input.stdin());
         let options = EmuOptions {
@@ -146,7 +220,14 @@ impl ZiskSdk {
         let mut emu = Emu::new(&self.rom);
 
         panic::catch_unwind(AssertUnwindSafe(|| {
-            emu.run(stdin, &options, None::<Box<dyn Fn(EmuTrace)>>);
+            emu.ctx = emu.create_emu_context(stdin, &options);
+            emu.ctx.stats.load_rom_data(&self.rom);
+            emu.ctx.do_stats = true;
+            while !emu.ctx.inst_ctx.end && emu.ctx.inst_ctx.step < MAX_STEPS {
+                let pc = emu.ctx.inst_ctx.pc;
+                emu.step(&options, &None::<Box<dyn Fn(EmuTrace)>>);
+                on_step(&emu, pc);
+            }
         }))
         .map_err(|err| Error::EmulatorPanic(panic_msg(err)))?;
 
@@ -158,11 +239,10 @@ impl ZiskSdk {
             return Err(Error::EmulatorError);
         }
 
+        emu.ctx.stats.on_finish(&emu.ctx.inst_ctx);
         emu.ctx.stats.set_use_thousands_sep(false);
-        let cost = cost::parse(&emu.ctx.stats.report(&self.rom))?;
-        let public_values = emu.get_output_8();
-
-        Ok((public_values.as_slice().into(), CostEstimation { cost }))
+        let report = emu.ctx.stats.report(&self.rom);
+        Ok((emu, report))
     }
 
     pub fn prove(&self, input: &Input) -> Result<(PublicValues, ZiskProof, Duration), Error> {

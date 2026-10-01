@@ -40,5 +40,5 @@ unset SETUP_KEY
 
 # The ASM services build from this source. The patched one makes them exit with the prover.
 # Keep the revision equal to the zisk git revision in Cargo.lock.
-curl -fsSL "https://raw.githubusercontent.com/han0110/zisk/de8d48e9e24965e82732463d807efaf2a739c54d/emulator-asm/src/main.c" \
+curl -fsSL "https://raw.githubusercontent.com/han0110/zisk/91189d5f09a86f494ac285fb362679f934917202/emulator-asm/src/main.c" \
     -o "$HOME/.zisk/zisk/emulator-asm/src/main.c"
