@@ -56,9 +56,9 @@
 //!
 //! `profile` splits the cost estimate over the guest call stacks, in the same unit, and its
 //! `cost_estimation` equals the `execute_estimated_cost` result. The frames follow
-//! [`ere_prover_core::CallTree`], and the `[continuation]` frame holds the rows that start each
+//! [`ere_prover_core::CallTree`], and the `[segment base]` frame holds the rows that start each
 //! segment. The memory rows of public-value and deferral accesses go to the frame that runs at the
-//! next segmentation check or at the exit, or to `[continuation]` when that check starts a segment.
+//! next segmentation check or at the exit, or to `[segment base]` when that check starts a segment.
 //!
 //! [`install_openvm_sdk.sh`]: https://github.com/eth-act/ere/blob/master/scripts/sdk_installers/install_openvm_sdk.sh
 

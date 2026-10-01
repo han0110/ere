@@ -55,10 +55,15 @@ impl CostProfile {
     }
 
     /// The gzipped pprof file that `go tool pprof` reads.
-    pub fn to_pprof(&self) -> Vec<u8> {
+    pub fn to_pb_gz(&self) -> Vec<u8> {
         let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
         encoder.write_all(&self.pprof.encode_to_vec()).unwrap();
         encoder.finish().unwrap()
+    }
+
+    /// The pprof protobuf that [`Self::to_pb_gz`] gzips.
+    pub fn to_pb(&self) -> Vec<u8> {
+        self.pprof.encode_to_vec()
     }
 }
 
@@ -695,9 +700,10 @@ mod tests {
         );
 
         let mut encoded = Vec::new();
-        GzDecoder::new(profile.to_pprof().as_slice())
+        GzDecoder::new(profile.to_pb_gz().as_slice())
             .read_to_end(&mut encoded)
             .unwrap();
+        assert_eq!(encoded, profile.to_pb());
         assert_eq!(
             pprof::Profile::decode(encoded.as_slice()).unwrap(),
             profile.pprof

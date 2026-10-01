@@ -3780,7 +3780,6 @@ dependencies = [
  "opentelemetry_sdk",
  "parking_lot",
  "pin-project-lite",
- "prost 0.14.3",
  "reqwest",
  "tokio",
  "tower 0.5.3",

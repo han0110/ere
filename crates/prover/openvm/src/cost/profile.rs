@@ -208,7 +208,7 @@ impl Profiler {
         };
         // The rows that the first segment starts with.
         let running = profiler.running(ctx);
-        profiler.call_tree.charge_root("[continuation]", &running);
+        profiler.call_tree.charge_root("[segment base]", &running);
         Ok(profiler)
     }
 
@@ -297,7 +297,7 @@ impl Profiler {
             }
             CHECK_END => {
                 if cut {
-                    self.call_tree.charge_root("[continuation]", &running);
+                    self.call_tree.charge_root("[segment base]", &running);
                 }
             }
             // The exit, and the start of a check, which clears the accesses since the last one.

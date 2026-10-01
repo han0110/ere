@@ -76,8 +76,6 @@ impl Component {
 pub(crate) struct CostEstimator {
     instance: OnceCell<RvrMeteredInstance<'static>>,
     profile_instance: OnceCell<RvrMeteredInstance<'static>>,
-    // Never read directly. Owned only to keep `*executor` alive for `instance`.
-    #[allow(dead_code)]
     executor: Box<VmExecutor<F, SdkVmConfig>>,
     profile_executor: Box<VmExecutor<F, ProfileConfig>>,
     app_exe: Arc<VmExe<F>>,

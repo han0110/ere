@@ -15,7 +15,6 @@ opentelemetry-otlp = { workspace = true, features = ["grpc-tonic"] }
 opentelemetry_sdk = { workspace = true, features = ["rt-tokio"] }
 parking_lot = { workspace = true }
 pin-project-lite = { workspace = true }
-prost = { workspace = true }
 reqwest = { workspace = true, features = ["rustls-tls"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal"] }
 tower = { workspace = true }

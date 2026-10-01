@@ -22,7 +22,6 @@ use ere_server_api::{
     setup_response::Result as SetupResult, verify_response::Result as VerifyResult,
 };
 use parking_lot::Mutex;
-use prost::Message;
 use tokio::{
     net::TcpListener,
     signal::unix::{SignalKind, signal},
@@ -321,7 +320,7 @@ impl<T: 'static + zkVMProver + Send + Sync> ZkvmService for zkVMServer<T> {
 
         let result = match result {
             Ok(profile) => ProfileResult::Ok(ProfileOk {
-                pprof: profile.pprof.encode_to_vec(),
+                pprof: profile.to_pb(),
                 peak_stack_bytes: profile.peak_stack_bytes,
                 peak_heap_bytes: profile.peak_heap_bytes,
             }),
